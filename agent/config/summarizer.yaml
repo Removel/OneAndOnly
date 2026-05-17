@@ -1,0 +1,11 @@
+# Summarizer Agent Configuration
+model_config:
+  model_name: "gpt-3.5-turbo"   # Model name for summarization tasks
+  temperature: 0.4               # Moderate temperature for balanced summaries
+  max_tokens: 512                # Maximum tokens for response
+api_config:
+  base_url: "https://api.openai.com/v1"  # API endpoint
+  api_key_env: "OPENAI_API_KEY"          # Name of environment variable containing the API key
+agent_config:
+  role: "Summarizer"                     # Role of the agent
+  description: "Summarizes current conversations and extracts key information"
