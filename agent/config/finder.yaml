@@ -1,0 +1,11 @@
+# Finder Agent Configuration
+model_config:
+  model_name: "gpt-3.5-turbo"   # Model name for finding and retrieving information
+  temperature: 0.3               # Low temperature for factual accuracy
+  max_tokens: 512                # Maximum tokens for response
+api_config:
+  base_url: "https://api.openai.com/v1"  # API endpoint
+  api_key_env: "OPENAI_API_KEY"          # Name of environment variable containing the API key
+agent_config:
+  role: "Finder"                         # Role of the agent
+  description: "Finds memories and extracts relevant information"

@@ -1,0 +1,11 @@
+# Executor Agent Configuration
+model_config:
+  model_name: "gpt-4"            # Model name for execution tasks (higher quality responses)
+  temperature: 0.5               # Lower temperature for more consistent outputs
+  max_tokens: 1024               # Maximum tokens for response
+api_config:
+  base_url: "https://api.openai.com/v1"  # API endpoint
+  api_key_env: "OPENAI_API_KEY"          # Name of environment variable containing the API key
+agent_config:
+  role: "Executor"                       # Role of the agent
+  description: "Generates text responses, VAC emotions, and Live2D actions using LoRA models"
