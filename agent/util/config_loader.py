@@ -11,7 +11,7 @@ def load_agent_config(agent_name: str) -> dict:
     加载指定智能体的配置
     
     Args:
-        agent_name: 智能体名称 (planner, executor, evaluator, finder, summarizer)
+        agent_name: 智能体名称 (planner, executor, evaluator, memory_manager, summarizer)
     
     Returns:
         包含完整配置的字典

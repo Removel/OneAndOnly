@@ -3,7 +3,7 @@ from langchain_core.messages import BaseMessage
 from langgraph.graph import add_messages
 
 
-class GlobalState(TypedDict):
+class GlobalState (TypedDict):
     # 对话核心
     messages: Annotated[list[BaseMessage], add_messages]    #对话历史
     user_input: str                                         #用户当前输入
@@ -24,3 +24,9 @@ class GlobalState(TypedDict):
 
     #评估相关
     need_evaluate: bool                                     #是否需要评估
+    retry_times: int                                        #重试次数
+    error_message: Optional[str]                            #错误信息
+
+
+class GlobalStafrom:
+    pass

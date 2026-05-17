@@ -14,7 +14,11 @@ def execute_node(state:GlobalState)->Dict[str, Any]:
     tools = state["tools"]
     
     # 创建agent实例
-    agent = AgentFactory.create_agent("executor",tools,executor_system_prompt.format(plan=plan))
+    agent = AgentFactory.create_agent(
+        "executor",
+        tools,
+        executor_system_prompt.format(plan=plan)
+    )
 
     # 执行计划
     response = agent.invoke(plan)
