@@ -4,6 +4,7 @@ from agent.graph.state import GlobalState
 
 
 class ChatManager:
+
     def __init__(self):
         self._compiled_graph = None
         self._conversation_history = []
@@ -17,6 +18,8 @@ class ChatManager:
     def clear_history(self):
         self._conversation_history = []
 
+    def get_conversation_history(self):
+        return self._conversation_history
 
 _chat_manager = ChatManager()
 
@@ -36,7 +39,7 @@ def chat_with_agent(
         compiled_graph = _chat_manager.get_compiled_graph()
         
         initial_state: GlobalState = {
-            "messages": _chat_manager._conversation_history,
+            "messages": _chat_manager.get_conversation_history(),
             "user_input": user_input,
             "response_text": "",
             "plan": "",
@@ -71,8 +74,7 @@ def chat_with_agent(
 
 
 def get_conversation_history() -> list:
-    return _chat_manager._conversation_history
-
+    return _chat_manager.get_conversation_history()
 
 def clear_conversation_history():
     _chat_manager.clear_history()
