@@ -144,8 +144,9 @@ cython_debug/
 .DS_Store
 
 # Project specific
-*.db
-*.sqlite
+data/*.db
+data/*.sqlite
+data/*.sqlite3
 config/local_config.py
 secrets.yaml
 credentials.json
