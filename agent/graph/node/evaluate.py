@@ -32,9 +32,9 @@ def evaluate_node(state: GlobalState) -> Dict[str, Any]:
     
     # 构建评估提示
     prompt = ChatPromptTemplate.from_messages([
-        ("system", evaluator_system_prompt.format(response_text=response_text)),
+        ("system", evaluator_system_prompt.format(user_input=user_input)),
         ("ai", f"执行计划为：{plan}，当前记忆为：{memory}"),
-        ("human", f"用户输入：{user_input}")
+        ("human", f"当前执行结果：{response_text}")
     ])
     
     # 构建chain并执行评估
@@ -46,13 +46,13 @@ def evaluate_node(state: GlobalState) -> Dict[str, Any]:
     })
 
     # 更新状态并返回评估结果
-    if evaluation.should_retry:
+    if evaluation.get("should_retry"):
         return {
-            "need_evaluate": evaluation.should_retry,
-            "error_message": evaluation.error_message,
+            "need_evaluate": evaluation.get("should_retry"),
+            "error_message": evaluation.get("error_message"),
             "retry_times": state["retry_times"] + 1,
         }
     else:
         return {
-            "need_evaluate": evaluation.should_retry,
+            "need_evaluate": evaluation.get("should_retry"),
         }

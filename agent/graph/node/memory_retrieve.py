@@ -2,14 +2,17 @@ from typing import Dict, Any
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from pydantic import BaseModel, Field
 
 from agent.graph.state import GlobalState
-from agent.prompt.memory_manager_prompt import (
-    memory_manager_system_prompt_find,
-)
+from agent.prompt.memory_manager_prompt import memory_manager_system_prompt_find
 from agent.util import AgentFactory
-from agent.util.find_tools import find_tools
+from agent.util.find_tools import find_tools, all_tools
 
+
+class MemoryRetrieveResult(BaseModel):
+    tools: list[str] = Field(description="executor可能调用的工具名称列表")
+    memory: str = Field(description="召回记忆内容")
 
 def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     """
@@ -19,31 +22,26 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     user_input = state["user_input"]
     messages = state["messages"]
 
-    # 获取到当前支持的tools工具列表
-    tools = find_tools()
-
     # 创建agent实例
-    memory_manager = AgentFactory.create_agent(
+    memory_manager = AgentFactory.create_role_agent(
         "memory_manager",
-        tools,
-        memory_manager_system_prompt_find.format(user_input=user_input)
+        all_tools,
+        memory_manager_system_prompt_find,
+        MemoryRetrieveResult,
     )
 
     # 构建提示词模板
     prompt = ChatPromptTemplate.from_messages([
-        MessagesPlaceholder(variable_name="messages"),
-        ("human", "{user_input}"),
+        MessagesPlaceholder("messages"),
+        ("human", "{input}")
     ])
 
-    # 创建链式调用
-    chain = prompt | memory_manager | JsonOutputParser()
-    
     # 执行agent任务
-    json_response = chain.invoke({
+    json_response = memory_manager.invoke({
         "messages": messages,
-        "user_input": user_input
+        "input": user_input
     })
-    
+
     # 解析agent任务结果
     executor_tools = json_response.get("tools", [])
     memory = json_response.get("memory", "")

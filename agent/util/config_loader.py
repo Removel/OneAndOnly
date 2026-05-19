@@ -16,7 +16,7 @@ def load_agent_config(agent_name: str) -> dict:
     Returns:
         包含完整配置的字典
     """
-    config_path = Path(__file__).parent / "config" / f"{agent_name}.yaml"
+    config_path = Path(__file__).parent.parent / "config" / f"{agent_name}.yaml"
     
     with open(config_path, 'r', encoding='utf-8') as file:
         config = yaml.safe_load(file)
