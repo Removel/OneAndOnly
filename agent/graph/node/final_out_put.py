@@ -18,12 +18,13 @@ from agent.util.find_tools import find_tools, all_tools
 # 异步操作，更新外挂记忆库内容
 def update_memory_async(user_input: str):
     try:
-        memory_manager = AgentFactory.create_agent(
+        memory_manager = AgentFactory.create_role_agent(
             "memory_manager",
             all_tools,
-            memory_manager_system_prompt_summarize
+            memory_manager_system_prompt_summarize,
         )
-        memory_manager.invoke(user_input)
+        summarize_result = memory_manager.invoke(user_input)
+        print(summarize_result)
     except Exception as e:
         print(f"Error updating memory: {e}")
 
@@ -37,7 +38,7 @@ def final_output_node(state: GlobalState)->Dict[str, Any]:
     user_input = state["user_input"]
     retry_times = state["retry_times"]
 
-    # 创建agent实例
+    # 创建llm实例
     llm = LLMFactory.create_llm("summarizer")
 
     if retry_times >= 3:
@@ -53,14 +54,13 @@ def final_output_node(state: GlobalState)->Dict[str, Any]:
             ("human", "{response}"),
         ])
 
-
     # 创建链式调用
     chain = prompt | llm | JsonOutputParser()
-    # 执行agent任务
+    # 执行llm任务
     json_response = chain.invoke({"response": response})
-    # 解析agent任务结果
+    # 解析llm任务结果
     response_text = json_response.get("response_text", "")
-    emotion_vac = json_response.get("emotion_vac", "")
+    emotion_vac = json_response.get("emotion_vac", {})
 
     # 使用线程池在后台执行记忆更新操作
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
