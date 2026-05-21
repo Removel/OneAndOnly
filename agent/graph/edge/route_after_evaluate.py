@@ -1,4 +1,13 @@
+import logging
+
 from agent.graph.state import GlobalState
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def route_after_evaluate(state: GlobalState) -> str:
@@ -19,12 +28,19 @@ def route_after_evaluate(state: GlobalState) -> str:
     need_evaluate = state.get("need_evaluate", False)
     retry_times = state.get("retry_times", 0)
     
+    logger.info(f"========== 路由判断 (route_after_evaluate) ==========")
+    logger.info(f"need_evaluate: {need_evaluate}")
+    logger.info(f"retry_times: {retry_times}")
+    
     if not need_evaluate:
         # 评估通过，直接输出最终结果
+        logger.info("路由决策: 评估通过 → 前往 final_output 节点")
         return "final_output"
     elif retry_times >= 3:
         # 重试次数超过限制，输出错误异常回答
+        logger.info("路由决策: 重试次数超限(>=3) → 前往 final_output 节点")
         return "final_output"
     else:
         # 需要重试且回到Plan节点重新规划
+        logger.info(f"路由决策: 需要重试，当前重试次数({retry_times}) < 3 → 前往 plan 节点")
         return "plan"

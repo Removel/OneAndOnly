@@ -1,4 +1,13 @@
+import logging
+
 from agent.graph.state import GlobalState
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 def route_after_execute(state: GlobalState) -> str:
@@ -15,7 +24,14 @@ def route_after_execute(state: GlobalState) -> str:
     Returns:
         str: 下一个节点的名称 ("evaluate" 或 "final_output")
     """
-    if state.get("need_evaluate", False):
+    need_evaluate = state.get("need_evaluate", False)
+    
+    logger.info(f"========== 路由判断 (route_after_execute) ==========")
+    logger.info(f"need_evaluate: {need_evaluate}")
+    
+    if need_evaluate:
+        logger.info("路由决策: 需要评估 → 前往 evaluate 节点")
         return "evaluate"
     else:
+        logger.info("路由决策: 无需评估 → 直接前往 final_output 节点")
         return "final_output"
