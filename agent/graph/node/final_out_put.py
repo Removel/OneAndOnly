@@ -23,10 +23,9 @@ def update_memory_async(user_input: str):
             all_tools,
             memory_manager_system_prompt_summarize,
         )
-        summarize_result = memory_manager.invoke(user_input)
-        print(summarize_result)
+        memory_manager.invoke({"input": user_input})
     except Exception as e:
-        print(f"Error updating memory: {e}")
+        pass
 
 
 def final_output_node(state: GlobalState)->Dict[str, Any]:
