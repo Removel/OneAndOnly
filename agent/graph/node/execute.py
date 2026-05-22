@@ -22,6 +22,7 @@ def execute_node(state:GlobalState)->Dict[str, Any]:
     # 获取到当前对话核心信息
     plan = state["plan"]
     tools = state["tools"]
+    user_input = state["user_input"]
     
     logger.info(f"执行计划: {plan[:100]}..." if len(plan) > 100 else f"执行计划: {plan}")
     logger.info(f"可用工具: {[tool.name if hasattr(tool, 'name') else str(tool) for tool in tools]}")
@@ -37,7 +38,7 @@ def execute_node(state:GlobalState)->Dict[str, Any]:
 
     # 执行计划
     logger.info("执行计划...")
-    result = agent.invoke({"input": "请执行计划"})
+    result = agent.invoke({"input": f"用户输入是：{user_input}，请执行计划"})
 
     # 更新状态
     response_text = ""

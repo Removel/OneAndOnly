@@ -1,6 +1,6 @@
 # Summarizer Agent Configuration
 model_config:
-  model_name: "gpt-5"   # Model name for summarization tasks
+  model_name: "gpt-4o"   # Model name for summarization tasks
   temperature: 0.4               # Moderate temperature for balanced summaries
   max_tokens: 512                # Maximum tokens for response
 api_config:
