@@ -6,3 +6,15 @@ pydantic
 pyyaml
 python-dotenv
 chromadb
+sqlalchemy
+fastapi
+uvicorn[standard]
+torch
+transformers
+datasets
+huggingface_hub
+onnxruntime
+onnx
+optimum
+accelerate
+optimum-onnx

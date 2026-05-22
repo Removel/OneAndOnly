@@ -3,7 +3,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agent.graph.node.final_out_put import final_output_node
+from agent.graph.node.final_output import final_output_node
 from agent.graph.state import GlobalState
 from langchain_core.messages import HumanMessage
 
