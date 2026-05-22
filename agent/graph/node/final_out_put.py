@@ -31,6 +31,7 @@ def update_memory_async(user_input: str):
             memory_manager_system_prompt_summarize,
         )
         memory_manager.invoke({"input": user_input})
+        logger.info("更新记忆成功")
     except Exception as e:
         logger.error(f"更新记忆失败: {e}")
 
@@ -59,24 +60,46 @@ def final_output_node(state: GlobalState)->Dict[str, Any]:
         logger.info("重试次数超过3次，使用错误响应模板")
         prompt = ChatPromptTemplate.from_messages([
             ("system", summarizer_system_prompt_error),
-            ("human", "{response}"),
-        ])
+        ], template_format="jinja2")
     else:
         # 构建正常响应提示词模板
         logger.info("使用正常响应模板")
         prompt = ChatPromptTemplate.from_messages([
             ("system", summarizer_system_prompt_normal),
-            ("human", "{response}"),
-        ])
+        ], template_format="jinja2")
 
-    # 创建链式调用
-    chain = prompt | llm | JsonOutputParser()
+    # 创建链式调用，直接获取文本内容
+    chain = prompt | llm | StrOutputParser()
     # 执行llm任务
     logger.info("执行summarizer chain...")
-    json_response = chain.invoke({"response": response})
-    # 解析llm任务结果
-    response_text = json_response.get("response_text", "")
-    emotion_vac = json_response.get("emotion_vac", {})
+    raw_content = chain.invoke({"response": response})
+    logger.debug(f"LLM原始输出:\n{raw_content}")
+    
+    # 手动解析内容和情绪信息
+    if "[EMOTION]" in raw_content and "[/EMOTION]" in raw_content:
+        # 分离内容和情绪信息
+        parts = raw_content.split("[EMOTION]")
+        response_text = parts[0].strip()
+        
+        # 解析情绪信息
+        emotion_section = parts[1].split("[/EMOTION]")[0].strip()
+        logger.debug(f"情绪部分原始内容:\n{emotion_section}")
+        emotion_vac = {}
+        for line in emotion_section.split('\n'):
+            if ':' in line:
+                key, value = line.split(':', 1)
+                key = key.strip()
+                value = value.strip()
+                try:
+                    emotion_vac[key] = float(value)
+                    logger.debug(f"解析情绪: {key} = {value}")
+                except ValueError:
+                    emotion_vac[key] = 0.5  # 默认值
+                    logger.debug(f"解析失败，使用默认值: {key} = 0.5")
+    else:
+        # 如果没有情绪信息，使用默认值
+        response_text = raw_content.strip()
+        emotion_vac = {"valence": 0.5, "arousal": 0.5, "control": 0.5}
 
     # 使用后台线程执行记忆更新操作（主线程不等待）
     logger.debug("启动异步记忆更新（后台线程）")
