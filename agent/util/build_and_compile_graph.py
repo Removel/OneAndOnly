@@ -204,7 +204,7 @@ def build_graph() -> StateGraph:
     构建完整的LangGraph图，包括所有节点和边
     
     根据文档设计的流程：
-    Start → MemoryRetrieve → Plan → Execute → (条件边)
+    Start → MemoryRetrieve → PlanExecute → (条件边)
                                               ↓
                                           if need_evaluate?
                                               ↓
@@ -218,7 +218,7 @@ def build_graph() -> StateGraph:
                                     ↙       ↘
                                    否       是
                                    ↓         ↓
-                                  Plan    FinalOutput
+                                  PlanExecute    FinalOutput
     
     Returns:
         StateGraph: 构建完成的图对象
@@ -238,31 +238,28 @@ def build_graph() -> StateGraph:
     graph.set_entry_point("memory_retrieve")
     
     # 添加固定边（无条件边）
-    # MemoryRetrieve → Plan
-    graph.add_edge("memory_retrieve", "plan")
-    
-    # Plan → Execute
-    graph.add_edge("plan", "execute")
+    # MemoryRetrieve → PlanExecute
+    graph.add_edge("memory_retrieve", "plan_execute")
     
     # 添加条件边
-    # Execute → (evaluate 或 final_output)
-    if "execute" in edges:
+    # PlanExecute → (evaluate 或 final_output)
+    if "plan_execute" in edges:
         graph.add_conditional_edges(
-            "execute",
-            edges["execute"],
+            "plan_execute",
+            edges["plan_execute"],
             {
                 "evaluate": "evaluate",
                 "final_output": "final_output"
             }
         )
     
-    # Evaluate → (plan 或 final_output)
+    # Evaluate → (plan_execute 或 final_output)
     if "evaluate" in edges:
         graph.add_conditional_edges(
             "evaluate",
             edges["evaluate"],
             {
-                "plan": "plan",
+                "plan_execute": "plan_execute",
                 "final_output": "final_output"
             }
         )

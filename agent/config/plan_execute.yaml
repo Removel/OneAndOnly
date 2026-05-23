@@ -1,0 +1,11 @@
+# PlanExecute Agent Configuration
+model_config:
+  model_name: "deepseek-v3.2"            # Model name for planning and execution tasks
+  temperature: 0.6               # Balanced temperature for both planning and execution
+  max_tokens: 1024               # Maximum tokens for response
+api_config:
+  base_url: "https://api.ssopen.top/v1"  # API endpoint
+  api_key_env: "OPENAI_API_KEY"          # Name of environment variable containing the API key
+agent_config:
+  role: "PlanExecute"                    # Role of the agent
+  description: "Understands user intent, generates responses, and decides whether evaluation is needed"

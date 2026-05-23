@@ -14,7 +14,6 @@ def test_evaluate():
     test_cases = [
         {
             "name": "成功执行",
-            "plan": "步骤1：回答用户的问候",
             "response_text": "你好！很高兴为你服务。",
             "user_input": "你好",
             "memory": "",
@@ -23,7 +22,6 @@ def test_evaluate():
         },
         {
             "name": "执行失败需要重试",
-            "plan": "步骤1：调用工具查询天气",
             "response_text": "工具调用失败，请重试",
             "user_input": "今天天气怎么样？",
             "memory": "",
@@ -32,7 +30,6 @@ def test_evaluate():
         },
         {
             "name": "部分成功",
-            "plan": "步骤1：分析销售数据->步骤2：生成报告",
             "response_text": "数据已分析，但报告生成部分有问题",
             "user_input": "帮我分析销售数据并生成报告",
             "memory": "用户需要详细的销售报告",
@@ -53,7 +50,7 @@ def test_evaluate():
                 "messages": [HumanMessage(content=test_case["user_input"])],
                 "user_input": test_case["user_input"],
                 "response_text": test_case["response_text"],
-                "plan": test_case["plan"],
+                "plan": "",
                 "memory": test_case["memory"],
                 "tools": [],
                 "emotion_vac": {},
@@ -94,19 +91,18 @@ def test_single_input():
     
     while True:
         try:
-            plan_input = input("执行计划: ")
-            if not plan_input.strip():
+            response_input = input("执行结果: ")
+            if not response_input.strip():
                 print("退出测试。")
                 break
             
-            response_input = input("执行结果: ")
             user_input = input("用户输入: ")
             
             state: GlobalState = {
                 "messages": [HumanMessage(content=user_input)],
                 "user_input": user_input,
                 "response_text": response_input,
-                "plan": plan_input,
+                "plan": "",
                 "memory": "",
                 "tools": [],
                 "emotion_vac": {},
@@ -115,8 +111,7 @@ def test_single_input():
                 "error_message": None
             }
             
-            print(f"\n执行计划: {plan_input}")
-            print(f"执行结果: {response_input}")
+            print(f"\n执行结果: {response_input}")
             print("-" * 40)
             
             result = evaluate_node(state)
