@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any
 
+from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from pydantic import BaseModel, Field
@@ -51,10 +52,12 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
 
     # 执行agent任务
     logger.info("执行memory_manager任务...")
-    json_response = memory_manager.invoke({
-        "messages": messages,
-        "input": user_input
-    })
+    
+    # 构建消息列表，将当前用户输入添加到历史消息中
+    input_messages = messages.copy()
+    input_messages.append(HumanMessage(content=user_input))
+    
+    json_response = memory_manager.invoke({"messages": input_messages})
 
     # 解析agent任务结果
     executor_tools = json_response.get("tools", [])

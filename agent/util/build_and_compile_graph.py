@@ -1,9 +1,10 @@
 import importlib
 import inspect
 from pathlib import Path
-from typing import Dict, Callable, Any
+from typing import Dict, Callable, Any, Optional
 
 from langgraph.graph import StateGraph
+from langgraph.types import Checkpointer
 
 from agent.graph.state import GlobalState
 
@@ -186,8 +187,7 @@ def get_node_functions() -> Dict[str, Callable]:
         Dict[str, Callable]: 节点名到节点函数的映射
         {
             "memory_retrieve": memory_retrieve函数,
-            "plan": plan_node函数,
-            "execute": execute_node函数,
+            "plan_execute": plan_execute_node函数,
             "evaluate": evaluate_node函数,
             "final_output": final_output_node函数
         }
@@ -258,24 +258,26 @@ def build_graph() -> StateGraph:
         graph.add_conditional_edges(
             "evaluate",
             edges["evaluate"],
-            {
-                "plan_execute": "plan_execute",
-                "final_output": "final_output"
-            }
+            {"plan_execute": "plan_execute", "final_output": "final_output"},
         )
-    
+
     # 设置终点
     graph.set_finish_point("final_output")
     
     return graph
 
 
-def compile_graph() -> Any:
+def compile_graph(checkpointer: Optional[Checkpointer] = None) -> Any:
     """
     构建并编译完整的LangGraph图
-    
+
+    Args:
+        checkpointer (Optional[Checkpointer], optional): 用于状态检查和恢复的检查点对象。默认值为None。
+
     Returns:
         编译后的图对象，可以直接用于执行
     """
     graph = build_graph()
-    return graph
+    if checkpointer:
+        return graph.compile(checkpointer=checkpointer)
+    return graph.compile()

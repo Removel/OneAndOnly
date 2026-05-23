@@ -1,5 +1,6 @@
 langchain-openai
 langgraph
+langgraph-checkpoint-sqlite
 langchain-core
 langchain
 pydantic
