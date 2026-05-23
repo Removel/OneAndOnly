@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Dict, Any
 
+from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from pydantic import BaseModel, Field
@@ -46,9 +47,14 @@ def plan_execute_node(state: GlobalState) -> Dict[str, Any]:
         response_format=None,
     )
 
-    # 执行规划与执行
+    # 执行规划与执行（包含对话历史）
     logger.info("执行规划与执行...")
-    result = agent.invoke({"input": f"用户输入是：{user_input}"})
+    
+    # 构建消息列表，将当前用户输入添加到历史消息中
+    input_messages = messages.copy()
+    input_messages.append(HumanMessage(content=user_input))
+    
+    result = agent.invoke({"messages": input_messages})
 
     # 更新状态
     response_text = ""
