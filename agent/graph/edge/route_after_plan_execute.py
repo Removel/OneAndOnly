@@ -10,9 +10,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def route_after_execute(state: GlobalState) -> str:
+def route_after_plan_execute(state: GlobalState) -> str:
     """
-    Execute节点后的条件边路由函数
+    PlanExecute节点后的条件边路由函数
     
     根据文档设计：
     - 如果need_evaluate为True，路由到Evaluate节点进行评估
@@ -26,7 +26,7 @@ def route_after_execute(state: GlobalState) -> str:
     """
     need_evaluate = state.get("need_evaluate", False)
     
-    logger.info(f"========== 路由判断 (route_after_execute) ==========")
+    logger.info(f"========== 路由判断 (route_after_plan_execute) ==========")
     logger.info(f"need_evaluate: {need_evaluate}")
     
     if need_evaluate:

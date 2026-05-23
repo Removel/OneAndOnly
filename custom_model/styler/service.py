@@ -251,28 +251,39 @@ class ContentProtector:
         for key in self.placeholder_counter:
             self.placeholder_counter[key] = 0
         
-        # 保护代码块 ```...```
+        # 收集所有需要替换的位置和内容
+        replacements = []
+        
+        # 收集代码块 ```...```
         for match in re.finditer(self.CODE_PATTERN, text, re.DOTALL):
-            placeholder = f"__CODE_{self.placeholder_counter['code']}__"
-            placeholders[placeholder] = match.group(0)
-            text = text.replace(match.group(0), placeholder)
+            placeholder = f"__CODE_BLOCK_{self.placeholder_counter['code']}__"
+            replacements.append((match.start(), match.end(), placeholder, match.group(0)))
             self.placeholder_counter['code'] += 1
         
-        # 保护 URL
+        # 收集 URL
         for match in re.finditer(self.URL_PATTERN, text):
-            placeholder = f"__URL_{self.placeholder_counter['url']}__"
-            placeholders[placeholder] = match.group(0)
-            text = text.replace(match.group(0), placeholder)
+            placeholder = f"__URL_LINK_{self.placeholder_counter['url']}__"
+            replacements.append((match.start(), match.end(), placeholder, match.group(0)))
             self.placeholder_counter['url'] += 1
         
-        # 保护数字
+        # 收集数字
         for match in re.finditer(self.NUMBER_PATTERN, text):
-            placeholder = f"__NUMBER_{self.placeholder_counter['number']}__"
-            placeholders[placeholder] = match.group(0)
-            text = text.replace(match.group(0), placeholder)
+            placeholder = f"__NUM_VALUE_{self.placeholder_counter['number']}__"
+            replacements.append((match.start(), match.end(), placeholder, match.group(0)))
             self.placeholder_counter['number'] += 1
         
-        return text, placeholders
+        # 按位置排序，从后往前替换，避免位置偏移
+        replacements.sort(key=lambda x: x[0], reverse=True)
+        
+        # 执行替换
+        text_list = list(text)
+        for start, end, placeholder, original in replacements:
+            text_list[start:end] = list(placeholder)
+            placeholders[placeholder] = original
+        
+        protected_text = ''.join(text_list)
+        
+        return protected_text, placeholders
     
     def restore_content(self, text: str, placeholders: Dict[str, str]) -> str:
         """
