@@ -57,11 +57,11 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     input_messages = messages.copy()
     input_messages.append(HumanMessage(content=user_input))
     
-    str_response = memory_manager.invoke({"messages": input_messages})
+    response = memory_manager.invoke({"messages": input_messages})
 
-    final_reply = str_response["messages"][-1].content
+    str_response = response["messages"][-1].content
 
-    json_response = json.loads(final_reply)
+    json_response = json.loads(str_response)
 
     # 解析agent任务结果
     executor_tools = json_response.get("tools", [])

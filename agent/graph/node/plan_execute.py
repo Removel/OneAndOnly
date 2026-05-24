@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from agent.graph.state import GlobalState
 from agent.prompt.plan_execute_prompt import plan_execute_system_prompt
 from agent.util import AgentFactory, LLMFactory
+from agent.util.find_tools import tools_for_plan_executor
 
 # 配置日志
 logging.basicConfig(
@@ -42,7 +43,7 @@ def plan_execute_node(state: GlobalState) -> Dict[str, Any]:
     logger.debug("创建plan_execute agent实例")
     agent = AgentFactory.create_role_agent(
         "plan_execute",
-        tools,
+        agent_tools=tools_for_plan_executor,
         system_prompt=plan_execute_system_prompt.format(memory=memory or "无"),
         response_format=None,
     )
@@ -53,13 +54,13 @@ def plan_execute_node(state: GlobalState) -> Dict[str, Any]:
     # 构建消息列表，将当前用户输入添加到历史消息中
     input_messages = messages.copy()
     input_messages.append(HumanMessage(content=user_input))
-    
+
     result = agent.invoke({"messages": input_messages})
 
     # 更新状态
     response_text = ""
     need_evaluate = False
-    
+
     messages = result.get("messages", [])
     if messages:
         # 从最后一条消息中提取内容
