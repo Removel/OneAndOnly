@@ -2,7 +2,7 @@ import logging
 import threading
 from typing import Dict, Any
 
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -30,7 +30,10 @@ def update_memory_async(user_input: str):
             tools_for_memory_manager,
             memory_manager_system_prompt_summarize,
         )
-        memory_manager.invoke({"input": user_input})
+        # 构建消息列表，将当前用户输入添加到历史消息中
+        new_message = HumanMessage(content=user_input)
+
+        response = memory_manager.invoke({"messages": [new_message]})
         logger.info("更新记忆成功")
     except Exception as e:
         logger.error(f"更新记忆失败: {e}")
