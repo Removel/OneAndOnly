@@ -13,7 +13,7 @@ from agent.prompt.memory_manager_prompt import (
 from agent.prompt.summarizer_prompt import  summarizer_system_prompt_error, \
     summarizer_system_prompt_normal
 from agent.util import LLMFactory, AgentFactory
-from agent.util.find_tools import find_tools, all_tools
+from agent.util.find_tools import tools_for_memory_manager
 
 # 配置日志
 logging.basicConfig(
@@ -27,7 +27,7 @@ def update_memory_async(user_input: str):
     try:
         memory_manager = AgentFactory.create_role_agent(
             "memory_manager",
-            all_tools,
+            tools_for_memory_manager,
             memory_manager_system_prompt_summarize,
         )
         memory_manager.invoke({"input": user_input})

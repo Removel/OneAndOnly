@@ -23,8 +23,6 @@ def test_memory_retrieve():
             "name": "询问个人信息",
             "user_input": "我叫什么名字？",
             "messages": [
-                HumanMessage(content="我叫张三"),
-                AIMessage(content="你好张三，很高兴认识你！"),
                 HumanMessage(content="我叫什么名字？")
             ],
             "description": "测试需要查询记忆的场景"

@@ -3,18 +3,21 @@ from typing import Type
 from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.tools import Tool
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel
 
 from .config_loader import load_agent_config
 from .llm_factory import LLMFactory
+from ..hooks.log_info import log_tool_calls, log_agent_output
+
 
 class AgentFactory:
 
     @staticmethod
     def create_role_agent(
         agent_name: str,
-        agent_tools: list,
+        agent_tools: list[Tool],
         system_prompt: str,
         response_format: Type[BaseModel] | None = None,
     ):
@@ -37,6 +40,7 @@ class AgentFactory:
             tools=agent_tools,
             system_prompt=system_prompt,
             response_format=response_format,
+            middleware=[log_tool_calls, log_agent_output]
         )
 
         return agent
