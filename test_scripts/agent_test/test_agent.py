@@ -7,118 +7,83 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent.main import chat_with_agent, get_conversation_history, clear_conversation_history
 
 def test_agent():
-    print("=== Agent 测试脚本 ===")
-    print("测试 session_id 功能和多轮对话")
+    print("=== Agent 交互式测试脚本 ===")
+    print("输入多轮对话，使用 session_id 保持会话连续性")
+    print("特殊命令:")
+    print("  /new <session_id> - 切换到新的会话ID")
+    print("  /clear - 清空当前会话历史")
+    print("  /history - 查看当前会话历史")
+    print("  /quit 或 /exit - 退出程序")
     print("-" * 50)
     
     try:
-        # 使用固定的 session_id 进行测试
-        session_id = "test_session_001"
-        print(f"使用会话ID: {session_id}")
+        # 初始化会话ID
+        session_id = "interactive_session_001"
+        print(f"默认会话ID: {session_id}")
         
-        # 清空历史记录
-        print("\n1. 清空历史记录...")
-        clear_conversation_history(session_id)
-        print("✓ 历史记录已清空")
-        
-        # 第一轮对话
-        print("\n2. 第一轮对话...")
-        user_input1 = "你好，请介绍一下你自己"
-        print(f"用户输入: {user_input1}")
-        
-        start_time = time.time()
-        result1 = chat_with_agent(
-            user_input=user_input1,
-            session_id=session_id
-        )
-        time1 = time.time() - start_time
-        
-        print(f"AI回复: {result1.get('response_text', '')}")
-        print(f"耗时: {time1:.2f}秒")
-        print(f"成功状态: {result1.get('success', False)}")
-        
-        if not result1.get('success'):
-            print(f"错误信息: {result1.get('error_message')}")
-            return
-        
-        # 第二轮对话（测试对话历史恢复）
-        print("\n3. 第二轮对话（测试对话历史恢复）...")
-        user_input2 = "刚才你说了什么？你需要回答：我刚刚说了……"
-        print(f"用户输入: {user_input2}")
-        
-        start_time = time.time()
-        result2 = chat_with_agent(
-            user_input=user_input2,
-            session_id=session_id
-        )
-        time2 = time.time() - start_time
-        
-        print(f"AI回复: {result2.get('response_text', '')}")
-        print(f"耗时: {time2:.2f}秒")
-        print(f"成功状态: {result2.get('success', False)}")
-        
-        if not result2.get('success'):
-            print(f"错误信息: {result2.get('error_message')}")
-            return
-        
-        # 第三轮对话
-        print("\n4. 第三轮对话...")
-        user_input3 = "我的名字是什么？"
-        print(f"用户输入: {user_input3}")
-        
-        start_time = time.time()
-        result3 = chat_with_agent(
-            user_input=user_input3,
-            session_id=session_id
-        )
-        time3 = time.time() - start_time
-        
-        print(f"AI回复: {result3.get('response_text', '')}")
-        print(f"耗时: {time3:.2f}秒")
-        print(f"成功状态: {result3.get('success', False)}")
-        
-        if not result3.get('success'):
-            print(f"错误信息: {result3.get('error_message')}")
-            return
-        
-        # 获取对话历史
-        print("\n5. 获取对话历史...")
-        history = get_conversation_history(session_id)
-        print(f"对话历史长度: {len(history)} 条消息")
-        for i, msg in enumerate(history):
-            print(f"  消息 {i+1}: {type(msg).__name__} - {str(msg)[:50]}...")
-        
-        # 测试新会话（验证独立性）
-        print("\n6. 测试新会话（验证独立性）...")
-        new_session_id = "test_session_002"
-        print(f"使用新会话ID: {new_session_id}")
-        
-        user_input4 = "你知道我刚才说了什么吗？"
-        print(f"用户输入: {user_input4}")
-        
-        start_time = time.time()
-        result4 = chat_with_agent(
-            user_input=user_input4,
-            session_id=new_session_id
-        )
-        time4 = time.time() - start_time
-        
-        print(f"AI回复: {result4.get('response_text', '')}")
-        print(f"耗时: {time4:.2f}秒")
-        print(f"成功状态: {result4.get('success', False)}")
-        
-        # 总结
-        print("\n" + "=" * 50)
-        print("=== 测试总结 ===")
-        print(f"✓ 第一轮对话成功 (耗时: {time1:.2f}秒)")
-        print(f"✓ 第二轮对话成功 (耗时: {time2:.2f}秒)")
-        print(f"✓ 第三轮对话成功 (耗时: {time3:.2f}秒)")
-        print(f"✓ 新会话独立测试成功 (耗时: {time4:.2f}秒)")
-        print(f"✓ 对话历史恢复功能正常")
-        print(f"✓ 会话独立性验证通过")
-        print(f"总耗时: {time1 + time2 + time3 + time4:.2f}秒")
-        print("=" * 50)
-        
+        while True:
+            print(f"\n[{session_id}] 用户输入: ", end="")
+            user_input = input().strip()
+            
+            if user_input.lower() in ['/quit', '/exit']:
+                print("退出测试程序。")
+                break
+            
+            elif user_input == '/clear':
+                print("正在清空会话历史...")
+                clear_conversation_history(session_id)
+                history_after_clear = get_conversation_history(session_id)
+                print(f"✓ 会话历史已清空 (清空后历史长度: {len(history_after_clear)})")
+                continue
+            
+            elif user_input == '/history':
+                print("正在获取会话历史...")
+                history = get_conversation_history(session_id)
+                print(f"当前会话历史长度: {len(history)} 条消息")
+                for i, msg in enumerate(history):
+                    print(f"  消息 {i+1}: {type(msg).__name__} - {str(msg)[:100]}...")
+                continue
+            
+            elif user_input.startswith('/new '):
+                parts = user_input.split(' ', 1)
+                if len(parts) > 1:
+                    new_session_id = parts[1].strip()
+                    if new_session_id:
+                        # 检查当前会话历史
+                        current_history = get_conversation_history(session_id)
+                        print(f"切换前 - 会话 '{session_id}' 历史长度: {len(current_history)}")
+                        
+                        session_id = new_session_id
+                        print(f"✓ 已切换到新会话ID: {session_id}")
+                        
+                        # 检查新会话历史
+                        new_history = get_conversation_history(session_id)
+                        print(f"切换后 - 会话 '{session_id}' 历史长度: {len(new_history)}")
+                    else:
+                        print("错误: 请提供有效的会话ID")
+                else:
+                    print("错误: 请提供会话ID，格式: /new <session_id>")
+                continue
+            
+            elif user_input == '':
+                print("请输入有效内容或命令。")
+                continue
+            
+            # 正常对话处理
+            print(f"正在发送消息到会话 '{session_id}'...")
+            start_time = time.time()
+            result = chat_with_agent(
+                user_input=user_input,
+                session_id=session_id
+            )
+            elapsed_time = time.time() - start_time
+            
+            if result.get('success'):
+                print(f"AI回复: {result.get('response_text', '无回复内容')}")
+                print(f"耗时: {elapsed_time:.2f}秒")
+            else:
+                print(f"❌ 请求失败: {result.get('error_message', '未知错误')}")
+                
     except KeyboardInterrupt:
         print("\n\n用户中断，退出测试。")
     except Exception as e:

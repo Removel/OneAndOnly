@@ -25,33 +25,24 @@ class ChatManager:
             self._compiled_graph = graph.compile(checkpointer=self._checkpointer)
         return self._compiled_graph
 
-    def get_conversation_history(self, thread_id: Optional[str] = None):
-        if thread_id and self._checkpointer:
-            try:
-                config = {"configurable": {"thread_id": thread_id}}
-                checkpoint = self._checkpointer.get(config)
-                if checkpoint:
-                    # checkpoint的结构是Checkpoint对象，需要访问其属性
-                    if hasattr(checkpoint, 'channel_values'):
-                        state = checkpoint.channel_values
-                        if isinstance(state, dict) and 'messages' in state:
-                            return state['messages']
-                    elif isinstance(checkpoint, dict):
-                        return checkpoint.get("messages", [])
-            except Exception as e:
-                print(f"获取对话历史失败: {str(e)}")
-                import traceback
-                traceback.print_exc()
-        return []
+    def get_conversation_history(self, thread_id: str):
+        config = {"configurable": {"thread_id": thread_id}}
+        compiled_graph = self.get_compiled_graph()
+        state = compiled_graph.get_state(config)
+        # state.values 里就是当前所有 channel 的值
+        return state.values.get("messages", []) if state else []
 
     # 清空对话历史
     def clear_history(self, thread_id: Optional[str] = None):
         if thread_id and self._checkpointer:
             try:
-                config = {"configurable": {"thread_id": thread_id}}
-                self._checkpointer.put(config, {}, {})
+                self._checkpointer.delete_thread(thread_id)
+                print(f"成功清空会话 {thread_id} 的历史")
             except Exception as e:
                 print(f"清空对话历史失败: {str(e)}")
+                import traceback
+
+                traceback.print_exc()
 
 
 
@@ -63,7 +54,6 @@ _chat_manager = ChatManager()
 def chat_with_agent(
     user_input: str,
     session_id: Optional[str] = None,
-    conversation_history: Optional[list] = None,
     clear_history: bool = False,
 ) -> Dict[str, Any]:
     """
@@ -71,7 +61,6 @@ def chat_with_agent(
 
     :param user_input: 用户输入文本
     :param session_id: 会话ID，用于存储和检索对话历史
-    :param conversation_history: 对话历史，用于初始化状态
     :param clear_history: 是否清空会话历史
     :return: 包含模型回复、情绪VAC、重试次数、错误信息、是否成功等信息的字典
     """
@@ -84,7 +73,7 @@ def chat_with_agent(
         compiled_graph = _chat_manager.get_compiled_graph()
 
         initial_state: GlobalState = {
-            "messages": [],  # 初始化为空列表，LangGraph 会自动从 checkpointer 恢复历史消息
+            "messages": [],  # 初始化为空列表
             "user_input": user_input,
             "response_text": "",
             "plan": "",
@@ -97,8 +86,15 @@ def chat_with_agent(
         }
         
         # TODO：2、执行智能体图
-        # LangGraph 会自动从 checkpointer 恢复状态（包括 messages）
+        # 创建配置，如果有 session_id
         config = {"configurable": {"thread_id": session_id}} if session_id else {}
+        
+        # 如果设置了 clear_history，确保不从检查点恢复消息
+        if clear_history and session_id:
+            # 在这种情况下，我们已经清空了历史，invoke 将使用提供的初始状态
+            # 不会恢复检查点中的历史消息
+            pass
+        
         result = compiled_graph.invoke(initial_state, config=config)
         # TODO：3、返回结果
         return {

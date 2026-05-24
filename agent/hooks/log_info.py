@@ -1,5 +1,13 @@
+import logging
+
 from langchain.agents.middleware import *
 
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 @wrap_tool_call()
 def log_tool_calls(request, handler):
@@ -13,20 +21,16 @@ def log_tool_calls(request, handler):
             - tool_call_id: 调用 ID
         handler: 真正的工具执行函数，接受 request 并返回结果
     """
-    print("可用属性:", [attr for attr in dir(request) if not attr.startswith("_")])
-    tool_name = request.tool
-    tool_args = request.tool_call
+    logger.info(f"[tool monitor]执行工具: {request.tool_call['name']}")
+    logger.info(f"[tool monitor]传入参数: {request.tool_call['args']}")
 
-    # 调用前日志
-    print(f"[Tool Call] {tool_name} 被调用，参数: {tool_args}")
-
-    # 执行工具
-    result = handler(request)
-
-    # 调用后日志
-    print(f"[Tool Result] {tool_name} 返回: {result}")
-
-    return result
+    try:
+        result = handler(request)
+        logger.info(f"[tool monitor]工具{request.tool_call['name']}调用成功")
+        return result
+    except Exception as e:
+        logger.error(f"工具{request.tool_call['name']}调用失败, 原因: {str(e)}")
+        raise e
 
 @after_agent
 def log_agent_output(state: AgentState, runtime: Runtime) -> dict | None:
@@ -36,5 +40,5 @@ def log_agent_output(state: AgentState, runtime: Runtime) -> dict | None:
     # Agent 的最终输出通常是 state["messages"] 列表中的最后一条消息。
     # 这里假设输出是来自 AI 的消息。
     last_message = state["messages"][-1]
-    print(f"[Agent Finished] 最终输出: {last_message.content}")
+    logger.info(f"[Agent Finished] 最终输出: {last_message.content}")
     return None
