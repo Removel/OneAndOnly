@@ -1,6 +1,6 @@
 # Memory Manager Agent Configuration
 model_config:
-  model_name: "gpt-5.4"   # Model name for managing and retrieving information
+  model_name: "gpt-4o-mini"   # Model name for managing and retrieving information
   temperature: 0.3               # Low temperature for factual accuracy
   max_tokens: 2048               # Maximum tokens for response
 api_config:

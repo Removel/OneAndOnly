@@ -31,7 +31,9 @@ def route_after_plan_execute(state: GlobalState) -> str:
     
     if need_evaluate:
         logger.info("路由决策: 需要评估 → 前往 evaluate 节点")
+        logger.info(f"========== 路由判断结束 (route_after_plan_execute) ==========")
         return "evaluate"
     else:
         logger.info("路由决策: 无需评估 → 直接前往 final_output 节点")
+        logger.info(f"========== 路由判断结束 (route_after_plan_execute) ==========")
         return "final_output"

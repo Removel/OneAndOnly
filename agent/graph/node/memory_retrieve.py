@@ -19,7 +19,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class MemoryRetrieveResult(BaseModel):
-    tools: list[str] = Field(description="executor可能调用的工具名称列表")
     memory: str = Field(description="召回记忆内容")
 
 def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
@@ -64,15 +63,12 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     json_response = json.loads(str_response)
 
     # 解析agent任务结果
-    executor_tools = json_response.get("tools", [])
     memory = json_response.get("memory", "")
 
-    logger.info(f"将要给下一个智能体的工具: {executor_tools}")
     logger.info(f"召回的记忆: {memory[:100]}..." if memory and len(memory) > 100 else f"召回的记忆: {memory if memory else '无'}")
     logger.info("========== 离开 Memory Retrieve 节点 ==========\n")
     
     # 更新状态
     return {
-        "tools": executor_tools,
         "memory": memory,
     }

@@ -17,7 +17,8 @@ class GlobalState (TypedDict):
     # skills相关的内容后面再说
     #skill_names: list[str]                                  #调用的技能名称
     #skill_result: Optional[str]                             #技能执行结果
-    tools: list[str]                                        #调用的工具名称列表
+    # 这里修改为直接给executor传递所有为他设计的工具
+    #tools: list[str]                                        #调用的工具名称列表
 
     #情绪
     emotion_vac:dict[str, float]                            #情绪VAC：Valence/Arousal/Control ：{'valence': 0.8, 'arousal': 0.3, 'control': 0.5}

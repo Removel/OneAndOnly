@@ -23,17 +23,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 异步操作，更新外挂记忆库内容
-def update_memory_async(user_input: str):
+def update_memory_async(user_input: str, conversation_history: list = None):
     try:
         memory_manager = AgentFactory.create_role_agent(
             "memory_manager",
             tools_for_memory_manager,
             memory_manager_system_prompt_summarize,
         )
-        # 构建消息列表，将当前用户输入添加到历史消息中
-        new_message = HumanMessage(content=user_input)
+        # 构建消息列表，包含对话历史和当前用户输入
+        messages = []
+        if conversation_history:
+            messages.extend(conversation_history)
+        messages.append(HumanMessage(content=f"这是新的用户输入: '{user_input}'\n你不需要对用户输入回应，请你开始更新记忆"))
 
-        response = memory_manager.invoke({"messages": [new_message]})
+        response = memory_manager.invoke({"messages": messages})
         logger.info("更新记忆成功")
     except Exception as e:
         logger.error(f"更新记忆失败: {e}")
@@ -106,7 +109,9 @@ def final_output_node(state: GlobalState)->Dict[str, Any]:
 
     # 使用后台线程执行记忆更新操作（主线程不等待）
     logger.debug("启动异步记忆更新（后台线程）")
-    thread = threading.Thread(target=update_memory_async, args=(user_input,))
+    # 获取当前对话历史作为上下文
+    conversation_history = state.get("messages", [])
+    thread = threading.Thread(target=update_memory_async, args=(user_input, conversation_history))
     thread.daemon = False
     thread.start()
 
@@ -117,6 +122,6 @@ def final_output_node(state: GlobalState)->Dict[str, Any]:
     # 更新状态
     return {
         "response_text": response_text,
-        "messages": AIMessage(content = response_text),
+        "messages": [HumanMessage(content=user_input),AIMessage(content = response_text)],
         "emotion_vac": emotion_vac,
     }
