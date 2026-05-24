@@ -1,15 +1,15 @@
+import json
 import logging
 from typing import Dict, Any
 
 from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from pydantic import BaseModel, Field
 
 from agent.graph.state import GlobalState
 from agent.prompt.memory_manager_prompt import memory_manager_system_prompt_find
 from agent.util import AgentFactory
-from agent.util.find_tools import find_tools, all_tools
+from agent.util.find_tools import all_tools
 
 # 配置日志
 logging.basicConfig(
@@ -38,10 +38,10 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     # 创建agent实例
     logger.debug("创建memory_manager agent实例")
     memory_manager = AgentFactory.create_role_agent(
-        "memory_manager",
-        all_tools,
-        memory_manager_system_prompt_find,
-        MemoryRetrieveResult,
+        agent_name="memory_manager",
+        agent_tools=all_tools,
+        system_prompt=memory_manager_system_prompt_find,
+        response_format=MemoryRetrieveResult,
     )
 
     # 构建提示词模板
@@ -57,13 +57,17 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     input_messages = messages.copy()
     input_messages.append(HumanMessage(content=user_input))
     
-    json_response = memory_manager.invoke({"messages": input_messages})
+    str_response = memory_manager.invoke({"messages": input_messages})
+
+    final_reply = str_response["messages"][-1].content
+
+    json_response = json.loads(final_reply)
 
     # 解析agent任务结果
     executor_tools = json_response.get("tools", [])
     memory = json_response.get("memory", "")
 
-    logger.info(f"识别到的工具: {executor_tools}")
+    logger.info(f"将要给下一个智能体的工具: {executor_tools}")
     logger.info(f"召回的记忆: {memory[:100]}..." if memory and len(memory) > 100 else f"召回的记忆: {memory if memory else '无'}")
     logger.info("========== 离开 Memory Retrieve 节点 ==========\n")
     
