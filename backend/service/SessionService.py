@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
+from backend.entity.pojo.Session import SessionPOJO
 from backend.entity.response.SessionResponse import SessionResponse
 from backend.entity.request.SessionRequest import SessionRequest
 from backend.repository.SessionRepository import SessionRepository
@@ -10,27 +11,18 @@ class SessionService:
     def __init__(self):
         self.session_repository = SessionRepository()
 
-    @staticmethod
-    def get_session_by_id(session_id: int) -> Optional[SessionResponse]:
+    def get_session_by_session_id(self,session_id: int) -> Optional[SessionResponse]:
         """
-        根据session_id获取对话历史
+        根据session_id获取会话详情
         :param session_id: 会话ID
         :return: SessionResponse对象，如果不存在则返回None
         """
-        repository = SessionRepository()
+        repository = self.session_repository
         try:
-            session_data = repository.get_by_id(session_id)
-            if session_data:
+            result = repository.get_session_by_session_id(session_id)
+            if result:
                 return SessionResponse(
-                    session_id=session_data['id'],
-                    user_id=session_data['user_id'],
-                    session_name=session_data['session_name'],
-                    status=session_data['status'],
-                    global_state=session_data['global_state'],
-                    metadata=session_data['metadata'],
-                    created_at=datetime.fromisoformat(session_data['created_at']) if session_data['created_at'] else None,
-                    updated_at=datetime.fromisoformat(session_data['updated_at']) if session_data['updated_at'] else None,
-                    last_activity_at=datetime.fromisoformat(session_data['last_activity_at']) if session_data['last_activity_at'] else None
+                    session=result
                 )
             return None
         except Exception as e:
@@ -40,28 +32,16 @@ class SessionService:
             if repository.db:
                 repository.db.close()
 
-    @staticmethod
-    def create_session(session_request: SessionRequest) -> Optional[SessionResponse]:
+    def create_session(self)->Optional[int] :
         """
         创建新的对话会话
-        :param session_request: 会话请求对象
-        :return: 创建的SessionResponse对象，如果失败则返回None
+        :return: 创建的会话ID，如果失败则返回None
         """
-        repository = SessionRepository()
+        repository = self.session_repository
         try:
-            session_data = repository.create(session_request)
-            if session_data:
-                return SessionResponse(
-                    session_id=session_data['id'],
-                    user_id=session_data['user_id'],
-                    session_name=session_data['session_name'],
-                    status=session_data['status'],
-                    global_state=session_data['global_state'],
-                    metadata=session_data['metadata'],
-                    created_at=datetime.fromisoformat(session_data['created_at']) if session_data['created_at'] else None,
-                    updated_at=datetime.fromisoformat(session_data['updated_at']) if session_data['updated_at'] else None,
-                    last_activity_at=datetime.fromisoformat(session_data['last_activity_at']) if session_data['last_activity_at'] else None
-                )
+            session_id = repository.create()
+            if session_id:
+                return session_id
             return None
         except Exception as e:
             print(f"创建会话失败: {str(e)}")
@@ -70,19 +50,53 @@ class SessionService:
             if repository.db:
                 repository.db.close()
 
-    @staticmethod
-    def delete_session(session_id: int) -> bool:
+    def delete_session(self,session_id: int) -> bool:
         """
         删除指定的对话会话
         :param session_id: 要删除的会话ID
         :return: 是否删除成功
         """
-        repository = SessionRepository()
+        repository = self.session_repository
         try:
             return repository.delete(session_id)
         except Exception as e:
             print(f"删除会话失败: {str(e)}")
             return False
+        finally:
+            if repository.db:
+                repository.db.close()
+
+    def update_session(self,session_id: int,to_update_data: Dict[str, Any]) -> bool:
+        """
+        更新指定的对话会话
+        :param session_id: 要更新的会话ID
+        :param to_update_data: 包含更新信息的字典对象
+        :return: 是否更新成功
+        """
+        repository = self.session_repository
+        try:
+            return repository.update_session(session_id,to_update_data)
+        except Exception as e:
+            print(f"更新会话失败: {str(e)}")
+            return False
+        finally:
+            if repository.db:
+                repository.db.close()
+
+    def get_active_sessions(self)->List[SessionPOJO]:
+        """
+        获取所有活跃会话信息
+        :return: 活跃会话信息包装在SessionPOJO列表中
+        """
+        repository = self.session_repository
+        try:
+            result = repository.get_active_sessions()
+            if result is not None:
+                return result
+            return []
+        except Exception as e:
+            print(f"获取活跃会话失败: {str(e)}")
+            return None
         finally:
             if repository.db:
                 repository.db.close()

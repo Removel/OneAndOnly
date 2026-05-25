@@ -5,5 +5,5 @@ from .Session import Session
 __all__ = [
     'Base',
     'ConversationHistory',
-    'SessionId.py'
+    'Session'
 ]
