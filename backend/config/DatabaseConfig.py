@@ -6,8 +6,8 @@ import os
 # 获取项目根目录（假设backend目录的父目录是项目根目录）
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 数据库配置 - SQLite文件将放在项目根目录下的data文件夹中
-DATABASE_DIR = os.path.join(PROJECT_ROOT, 'data')
+# 数据库配置 - SQLite文件将放在项目根目录下的database/backend文件夹中
+DATABASE_DIR = os.path.join(PROJECT_ROOT, 'database', 'backend')
 DATABASE_FILE = os.path.join(DATABASE_DIR, 'conversation.db')
 DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_FILE}')
 
