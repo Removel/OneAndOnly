@@ -1,26 +1,42 @@
+from datetime import datetime
 from typing import List, Dict, Any, Optional
+
+from backend.entity.pojo.Session import SessionPOJO
 
 
 class SessionRequest:
-    def __init__(self):
-        self.user_id: int = 0
-        self.session_name: str = ""
-        self.metadata: Dict[str, Any] = {}
+    def __init__(
+        self,
+        session_id: Optional[int] = None,
+        status: Optional[str] = None,
+        last_activity_at: Optional[datetime] = None,
+    ):
+        self.last_activity_at = last_activity_at
+        self.session_id = session_id
+        self.status = status
 
-    def get_user_id(self) -> int:
-        return self.user_id
-    
-    def get_session_name(self) -> str:
-        return self.session_name
-    
-    def get_metadata(self) -> Dict[str, Any]:
-        return self.metadata
+    def get_session_id(self) -> Optional[int]:
+        return self.session_id
 
-    def set_user_id(self, user_id: int):
-        self.user_id = user_id
-    
-    def set_session_name(self, session_name: str):
-        self.session_name = session_name
-    
-    def set_metadata(self, metadata: Dict[str, Any]):
-        self.metadata = metadata
+    def set_session_id(self, session_id: int):
+        self.session_id = session_id
+
+    def get_status(self) -> Optional[str]:
+        return self.status
+
+    def set_status(self, status: str):
+        self.status = status
+        return self.last_activity_at
+
+    def set_last_activity_at(self, last_activity_at: datetime):
+        self.last_activity_at = last_activity_at
+
+    def get_last_activity_at(self) -> Optional[datetime]:
+        return self.last_activity_at
+
+    def to_dict(self):
+        return {
+            "session_id": self.session_id,
+            "status": self.status,
+            "last_activity_at": self.last_activity_at,
+        }

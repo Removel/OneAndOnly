@@ -4,7 +4,7 @@ from backend.entity.pojo.Base import Base
 from backend.util.SnowflakeIdGenerator import generate_snowflake_id
 
 
-class Session(Base):
+class SessionPOJO(Base):
     """
     会话POJO类，用于管理对话会话
     """
@@ -24,7 +24,8 @@ class Session(Base):
     
     # 最后活动时间
     last_activity_at = Column(DateTime, default=datetime.now, comment='最后活动时间')
-    
+
+
     def __repr__(self):
         return f"<Session(id={self.id}, status='{self.status}')>"
     
