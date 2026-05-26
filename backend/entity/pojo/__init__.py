@@ -1,9 +1,7 @@
 from .Base import Base
-from .ConversationHistory import ConversationHistory
-from .Session import Session
+from .Session import SessionPOJO
 
 __all__ = [
     'Base',
-    'ConversationHistory',
-    'Session'
+    'SessionPOJO'
 ]

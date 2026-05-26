@@ -5,11 +5,10 @@ import sys
 import os
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from backend.config.DatabaseConfig import init_db, get_database_info, get_db
-from backend.entity.pojo.Session import Session
-from backend.entity.pojo.ConversationHistory import ConversationHistory
+from backend.entity.pojo.Session import SessionPOJO
 
 
 def test_database():
@@ -40,42 +39,17 @@ def test_database():
     
     try:
         # 创建测试会话
-        session = Session(
-            user_id=1,
-            session_name="测试会话",
-            status="active"
-        )
+        session = SessionPOJO()
         db.add(session)
         db.commit()
         db.refresh(session)
         
         print(f"创建会话成功:")
         print(f"  会话ID: {session.id}")
-        print(f"  用户ID: {session.user_id}")
-        print(f"  会话名称: {session.session_name}")
-        print(f"  状态: {session.status}")
-        
-        # 测试创建对话历史
-        print("\n" + "=" * 50)
-        print("测试创建对话历史...")
-        print("=" * 50)
-        
-        history = ConversationHistory(
-            session_id=session.id,
-            user_id=1,
-            message_type="human",
-            content="你好，这是一个测试消息",
-            message_order=1
-        )
-        db.add(history)
-        db.commit()
-        db.refresh(history)
-        
-        print(f"创建对话历史成功:")
-        print(f"  消息ID: {history.id}")
-        print(f"  会话ID: {history.session_id}")
-        print(f"  消息类型: {history.message_type}")
-        print(f"  内容: {history.content}")
+        print(f"  会话状态: {session.status}")
+        print(f"  创建时间: {session.created_at}")
+        print(f"  更新时间: {session.updated_at}")
+        print(f"  最后活动时间: {session.last_activity_at}")
         
         # 测试查询
         print("\n" + "=" * 50)
@@ -83,16 +57,42 @@ def test_database():
         print("=" * 50)
         
         # 查询会话
-        found_session = db.query(Session).filter_by(id=session.id).first()
+        found_session = db.query(SessionPOJO).filter_by(id=session.id).first()
         if found_session:
-            print(f"查询到会话: {found_session.session_name}")
+            print(f"查询到会话: ID={found_session.id}, 状态={found_session.status}")
         
-        # 查询对话历史
-        found_history = db.query(ConversationHistory).filter_by(session_id=session.id).all()
-        print(f"查询到 {len(found_history)} 条对话历史")
+        # 查询所有会话
+        all_sessions = db.query(SessionPOJO).all()
+        print(f"查询到 {len(all_sessions)} 个会话")
+        
+        # 查询活跃会话
+        active_sessions = db.query(SessionPOJO).filter_by(status="active").all()
+        print(f"查询到 {len(active_sessions)} 个活跃会话")
+        
+        # 测试更新会话
+        print("\n" + "=" * 50)
+        print("测试更新会话...")
+        print("=" * 50)
+        
+        found_session.status = "archived"
+        db.commit()
+        db.refresh(found_session)
+        print(f"更新会话状态成功: {found_session.status}")
+        
+        # 测试软删除会话
+        print("\n" + "=" * 50)
+        print("测试软删除会话...")
+        print("=" * 50)
+        
+        found_session.status = "deleted"
+        db.commit()
+        db.refresh(found_session)
+        print(f"软删除会话成功: {found_session.status}")
         
     except Exception as e:
         print(f"错误: {str(e)}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
     finally:
         db.close()
