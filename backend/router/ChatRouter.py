@@ -1,52 +1,76 @@
 import logging
-from fastapi import APIRouter
+from typing import List
+
+from fastapi import APIRouter, Depends
 
 from backend.entity.request.ChatRequest import ChatRequest
 from backend.entity.response.ChatResponse import ChatResponse
 from backend.entity.Result import Result
 from backend.service.ChatService import ChatService
 
-# 设置日志
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 使用APIRouter而不是FastAPI主应用，更适合模块化路由管理
 chat_router = APIRouter(prefix="/api", tags=["chat"])
 
+
+def get_chat_service():
+    return ChatService()
+
+
 @chat_router.post("/chat", response_model=Result[ChatResponse])
-async def chat_endpoint(chat_request: ChatRequest) -> Result[ChatResponse]:
+async def chat(chat_request: ChatRequest, service: ChatService = Depends(get_chat_service)) -> Result[ChatResponse]:
     """
     处理用户输入，调用智能体进行对话
     :param chat_request: 用户对话请求内容
+    :param service: 聊天服务实例
     :return: 智能体的回复包装在Result中
     """
-    try:
-        # 输入验证
-        input_text = chat_request.get_human_input()
-        conversation_id = chat_request.get_conversation_id()
-        clear_history = chat_request.get_clear_history()
-        
-        if not input_text or input_text.strip() == "":
-            return Result.error(msg="输入文本不能为空", code=400)
-        
-        logger.info(f"收到聊天请求，对话ID: {conversation_id}, 清除历史: {clear_history}")
-        
-        # 调用聊天服务处理请求
-        chat_response = ChatService.chat(
-            human_input=input_text, 
-            conversation_id=conversation_id, 
-            clear_history=clear_history
-        )
-        
-        logger.info(f"聊天响应成功，对话ID: {conversation_id}, 成功: {chat_response.success}")
-        
-        return Result.success(data=chat_response)
+    logger.info(f"收到聊天请求，会话ID: {chat_request.session_id}, 清除历史: {chat_request.clear_history}")
     
-    except ValueError as ve:
-        logger.error(f"值错误: {str(ve)}")
-        return Result.error(msg=f"参数错误: {str(ve)}", code=400)
-    except Exception as e:
-        logger.error(f"聊天服务处理失败: {str(e)}")
-        # 捕获异常并返回错误结果
-        error_msg = f"聊天服务处理失败: {str(e)}"
-        return Result.error(msg=error_msg, code=500)
+    result_dict = service.chat(
+        human_input=chat_request.human_input,
+        session_id=chat_request.session_id,
+        clear_history=chat_request.clear_history
+    )
+    
+    response = ChatResponse(
+        response=result_dict.get("response_text", ""),
+        emotion_vac=result_dict.get("emotion_vac", {}),
+        retry_times=result_dict.get("retry_times", 0),
+        error_message=result_dict.get("error_message"),
+        success=result_dict.get("success", True)
+    )
+    
+    logger.info(f"聊天响应成功，会话ID: {chat_request.session_id}, 成功: {response.success}")
+    return Result.success(data=response)
+
+
+@chat_router.get("/session/{session_id}/history", response_model=Result[List[dict]])
+async def get_conversation_history(session_id: int, service: ChatService = Depends(get_chat_service)) -> Result[List[dict]]:
+    """
+    获取会话的对话历史
+    :param session_id: 会话ID
+    :param service: 聊天服务实例
+    :return: 对话历史列表包装在Result中
+    """
+    logger.info(f"获取对话历史请求，会话ID: {session_id}")
+    
+    history_list = service.get_conversation_history(session_id)
+    
+    return Result.success(data=history_list)
+
+
+@chat_router.delete("/session/{session_id}/history", response_model=Result[bool])
+async def clear_conversation_history(session_id: int, service: ChatService = Depends(get_chat_service)) -> Result[bool]:
+    """
+    清空会话的对话历史
+    :param session_id: 会话ID
+    :param service: 聊天服务实例
+    :return: 清空结果包装在Result中
+    """
+    logger.info(f"清空对话历史请求，会话ID: {session_id}")
+    
+    service.clear_conversation_history(session_id)
+    
+    logger.info(f"清空对话历史成功，会话ID: {session_id}")
+    return Result.success(data=True)

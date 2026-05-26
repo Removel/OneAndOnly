@@ -39,6 +39,18 @@ class ResourceException(BaseBusinessException):
         super().__init__(msg=msg, code=404)
 
 
+class NotFoundException(BaseBusinessException):
+    """资源不存在异常"""
+    def __init__(self, resource: str = None, identifier: str = None, msg: str = None):
+        if msg is None:
+            if resource and identifier:
+                msg = f"{resource} with id '{identifier}' not found"
+            elif resource:
+                msg = f"{resource} not found"
+            else:
+                msg = "资源不存在"
+        super().__init__(msg=msg, code=404)
+
 class ParamValidationException(BaseBusinessException):
     """参数验证异常"""
     def __init__(self, msg: str = "参数验证失败", code: int = 400):

@@ -6,7 +6,7 @@ from backend.entity.response.SessionResponse import SessionResponse
 
 __all__ = [
     'ChatRequest',
-    'ChatResponse', 
+    'ChatResponse',
     'Result',
     'SessionRequest',
     'SessionResponse'

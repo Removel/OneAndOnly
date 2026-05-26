@@ -1,102 +1,91 @@
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 
 from backend.entity.pojo.Session import SessionPOJO
-from backend.entity.response.SessionResponse import SessionResponse
-from backend.entity.request.SessionRequest import SessionRequest
 from backend.repository.SessionRepository import SessionRepository
+from backend.exception.Exceptions import ParamValidationException, NotFoundException
 
 
 class SessionService:
     def __init__(self):
         self.session_repository = SessionRepository()
 
-    def get_session_by_session_id(self,session_id: int) -> Optional[SessionResponse]:
+    def get_session_by_session_id(self, session_id: int) -> SessionPOJO:
         """
         根据session_id获取会话详情
         :param session_id: 会话ID
-        :return: SessionResponse对象，如果不存在则返回None
+        :return: SessionPOJO实体
+        :raises ParamValidationException: 参数验证失败
+        :raises NotFoundException: 会话不存在
         """
-        repository = self.session_repository
-        try:
-            result = repository.get_session_by_session_id(session_id)
-            if result:
-                return SessionResponse(
-                    session=result
-                )
-            return None
-        except Exception as e:
-            print(f"获取会话失败: {str(e)}")
-            return None
-        finally:
-            if repository.db:
-                repository.db.close()
+        if session_id <= 0:
+            raise ParamValidationException(msg="会话ID必须为正整数")
+        
+        result = self.session_repository.get_session_by_session_id(session_id)
+        if result is None:
+            raise NotFoundException(msg=f"会话ID {session_id} 不存在")
+        return result
 
-    def create_session(self)->Optional[int] :
+    def create_session(self) -> SessionPOJO:
         """
         创建新的对话会话
-        :return: 创建的会话ID，如果失败则返回None
+        :return: 创建的会话实体
         """
-        repository = self.session_repository
-        try:
-            session_id = repository.create()
-            if session_id:
-                return session_id
-            return None
-        except Exception as e:
-            print(f"创建会话失败: {str(e)}")
-            return None
-        finally:
-            if repository.db:
-                repository.db.close()
+        return self.session_repository.create()
 
-    def delete_session(self,session_id: int) -> bool:
+    def delete_session(self, session_id: int):
         """
         删除指定的对话会话
         :param session_id: 要删除的会话ID
-        :return: 是否删除成功
+        :raises ParamValidationException: 参数验证失败
+        :raises NotFoundException: 会话不存在
         """
-        repository = self.session_repository
-        try:
-            return repository.delete(session_id)
-        except Exception as e:
-            print(f"删除会话失败: {str(e)}")
-            return False
-        finally:
-            if repository.db:
-                repository.db.close()
+        if session_id <= 0:
+            raise ParamValidationException(msg="会话ID必须为正整数")
+        
+        result = self.session_repository.get_session_by_session_id(session_id)
+        if result is None:
+            raise NotFoundException(msg=f"会话ID {session_id} 不存在")
+        
+        self.session_repository.delete(session_id)
 
-    def update_session(self,session_id: int,to_update_data: Dict[str, Any]) -> bool:
+    def update_session(self, session_id: int, to_update_data: Dict[str, Any]) -> SessionPOJO:
         """
         更新指定的对话会话
         :param session_id: 要更新的会话ID
         :param to_update_data: 包含更新信息的字典对象
-        :return: 是否更新成功
+        :return: 更新后的会话实体
+        :raises ParamValidationException: 参数验证失败
+        :raises NotFoundException: 会话不存在
         """
-        repository = self.session_repository
-        try:
-            return repository.update_session(session_id,to_update_data)
-        except Exception as e:
-            print(f"更新会话失败: {str(e)}")
-            return False
-        finally:
-            if repository.db:
-                repository.db.close()
+        if session_id <= 0:
+            raise ParamValidationException(msg="会话ID必须为正整数")
+        
+        if not to_update_data:
+            raise ParamValidationException(msg="更新数据不能为空")
+        
+        result = self.session_repository.get_session_by_session_id(session_id)
+        if result is None:
+            raise NotFoundException(msg=f"会话ID {session_id} 不存在")
+        
+        self.session_repository.update_session(session_id, to_update_data)
+        return self.session_repository.get_session_by_session_id(session_id)
 
-    def get_active_sessions(self)->List[SessionPOJO]:
+    def get_active_sessions(self) -> List[SessionPOJO]:
         """
         获取所有活跃会话信息
-        :return: 活跃会话信息包装在SessionPOJO列表中
+        :return: 活跃会话实体列表
         """
-        repository = self.session_repository
-        try:
-            result = repository.get_active_sessions()
-            if result is not None:
-                return result
+        result = self.session_repository.get_active_sessions()
+        if result is None:
             return []
-        except Exception as e:
-            print(f"获取活跃会话失败: {str(e)}")
-            return None
-        finally:
-            if repository.db:
-                repository.db.close()
+        return result
+
+    def get_all_sessions(self) -> List[SessionPOJO]:
+        """
+        获取所有会话信息
+        :return: 所有会话实体列表
+        """
+        result = self.session_repository.get_all_sessions()
+        if result is None:
+            return []
+        return result
