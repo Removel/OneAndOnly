@@ -4,6 +4,7 @@ from backend.router.SessionRouter import session_router
 from backend.router.ChatRouter import chat_router
 from backend.exception.GlobalExceptionHandler import register_exception_handlers
 from backend.config.DatabaseConfig import init_db
+from backend.config.CorsConfig import register_cors
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +21,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="One and Only Backend API", version="1.0.0", lifespan=lifespan)
+
+app = register_cors(app)
 
 app.include_router(session_router)
 app.include_router(chat_router)
