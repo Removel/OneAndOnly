@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 
 from backend.entity.request.ChatRequest import ChatRequest
 from backend.entity.response.ChatResponse import ChatResponse
+from backend.entity.response.ChatHistoryResponse import ChatHistoryResponse
 from backend.entity.Result import Result
 from backend.service.ChatService import ChatService
 
@@ -45,19 +46,19 @@ async def chat(chat_request: ChatRequest, service: ChatService = Depends(get_cha
     return Result.success(data=response)
 
 
-@chat_router.get("/session/{session_id}/history", response_model=Result[List[dict]])
-async def get_conversation_history(session_id: int, service: ChatService = Depends(get_chat_service)) -> Result[List[dict]]:
+@chat_router.get("/session/{session_id}/history", response_model=Result[ChatHistoryResponse])
+async def get_conversation_history(session_id: int, service: ChatService = Depends(get_chat_service)) -> Result[ChatHistoryResponse]:
     """
     获取会话的对话历史
     :param session_id: 会话ID
     :param service: 聊天服务实例
-    :return: 对话历史列表包装在Result中
+    :return: 对话历史响应对象包装在Result中
     """
     logger.info(f"获取对话历史请求，会话ID: {session_id}")
     
-    history_list = service.get_conversation_history(session_id)
+    history_response = service.get_conversation_history(session_id)
     
-    return Result.success(data=history_list)
+    return Result.success(data=history_response)
 
 
 @chat_router.delete("/session/{session_id}/history", response_model=Result[bool])

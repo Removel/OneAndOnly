@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from agent.main import chat_with_agent, get_conversation_history, clear_conversation_history
 from backend.repository.SessionRepository import SessionRepository
 from backend.exception.Exceptions import ParamValidationException, NotFoundException, ChatException
+from backend.entity.response.ChatHistoryResponse import ChatHistoryResponse
 
 
 class ChatService:
@@ -47,11 +48,11 @@ class ChatService:
         except Exception as e:
             raise ChatException(msg=f"聊天操作失败: {str(e)}")
 
-    def get_conversation_history(self, session_id: int) -> List[Dict[str, Any]]:
+    def get_conversation_history(self, session_id: int) -> ChatHistoryResponse:
         """
         获取会话的对话历史
         :param session_id: 会话ID
-        :return: 对话历史列表
+        :return: 对话历史响应对象
         :raises ParamValidationException: 参数验证失败
         :raises NotFoundException: 会话不存在
         """
@@ -66,7 +67,6 @@ class ChatService:
             thread_id = str(session_id)
             history = get_conversation_history(thread_id)
             
-            # 将消息对象转换为字典
             history_dict = []
             for message in history:
                 message_dict = {
@@ -74,14 +74,13 @@ class ChatService:
                     "content": message.content,
                     "id": getattr(message, 'id', None)
                 }
-                # 添加其他可能的属性
                 if hasattr(message, 'additional_kwargs'):
                     message_dict["additional_kwargs"] = message.additional_kwargs
                 if hasattr(message, 'response_metadata'):
                     message_dict["response_metadata"] = message.response_metadata
                 history_dict.append(message_dict)
             
-            return history_dict
+            return ChatHistoryResponse.from_data(session_id, history_dict)
         except Exception as e:
             raise ChatException(msg=f"获取对话历史失败: {str(e)}")
 
