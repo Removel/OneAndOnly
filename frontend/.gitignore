@@ -1,0 +1,44 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# build outputs
+dist
+dist-ssr
+*.local
+
+# editor / system
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# env (本地覆盖文件不入库)
+.env.local
+.env.*.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# auto-import 生成的声明
+src/types/auto-imports.d.ts
+src/types/components.d.ts
+
+# vue-tsc / tsc 增量构建产物（构建走 vite，无需提交）
+*.tsbuildinfo
+
+# Live2D 模型资源（仓库不内置，由用户自行放入）
+public/live2d/*/
+!public/live2d/manifest.json
+!public/live2d/.gitkeep
+public/live2d/core/

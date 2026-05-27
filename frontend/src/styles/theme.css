@@ -1,0 +1,56 @@
+/**
+ * 主题 token：暖色二次元基调
+ * 所有组件读取 var(--color-*) 与 var(--radius-*)，禁止在组件中硬编码十六进制。
+ */
+:root {
+  /* 背景层（由浅到深，全部偏暖） */
+  --color-bg-base: #fff8f1;
+  --color-bg-soft: #ffefe2;
+  --color-bg-card: #ffffffee;
+  --color-bg-elevated: #ffe4d6;
+
+  /* 主色（樱粉系） */
+  --color-primary: #ff8fa3;
+  --color-primary-soft: #ffc2ce;
+  --color-primary-strong: #f46a86;
+
+  /* 辅助色 */
+  --color-accent-peach: #ffb089;
+  --color-accent-cream: #ffd9a8;
+  --color-accent-mint: #b8e0c2;
+  --color-accent-lilac: #e5c8f0;
+
+  /* 文本（暖棕替代冷黑） */
+  --color-text-primary: #5a3e36;
+  --color-text-secondary: #8a6a5e;
+  --color-text-inverse: #ffffff;
+
+  /* 状态色 */
+  --color-success: #7dc592;
+  --color-warning: #f2b65c;
+  --color-danger: #e97a7a;
+
+  /* 圆角 / 阴影 */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --shadow-card: 0 6px 18px rgb(244 106 134 / 10%);
+  --shadow-float: 0 12px 32px rgb(244 106 134 / 16%);
+
+  /* 情绪驱动变量（默认中性，由 useEmotionDriver 实时改写） */
+  --aura-h: 18;
+  --aura-s: 70%;
+  --aura-l: 80%;
+  --aura-a: 0.35;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family:
+    "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
