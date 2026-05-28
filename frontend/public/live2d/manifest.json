@@ -1,4 +1,33 @@
 {
-  "default": null,
-  "models": []
+  "current": "mao_pro_en",
+  "models": [
+    {
+      "id": "mao_pro_en",
+      "name": "Mao Pro (EN)",
+      "entry": "/live2d/mao_pro_en/runtime/mao_pro.model3.json",
+      "transform": { "scale": 0.18, "x": 0, "y": -0.05 },
+      "expressionsByEmotion": {
+        "happy": "exp_01",
+        "calm": "exp_02",
+        "sad": "exp_03",
+        "angry": "exp_04",
+        "neutral": null
+      },
+      "idleMotionGroup": "Idle"
+    },
+    {
+      "id": "mao_pro_zh",
+      "name": "Mao Pro (ZH)",
+      "entry": "/live2d/mao_pro_zh/runtime/mao_pro.model3.json",
+      "transform": { "scale": 0.18, "x": 0, "y": -0.05 },
+      "expressionsByEmotion": {
+        "happy": "exp_01",
+        "calm": "exp_02",
+        "sad": "exp_03",
+        "angry": "exp_04",
+        "neutral": null
+      },
+      "idleMotionGroup": "Idle"
+    }
+  ]
 }

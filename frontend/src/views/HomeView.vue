@@ -1,50 +1,121 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { NCard, NTag, NButton, NSpace } from 'naive-ui'
+import { useMessage } from 'naive-ui'
+import AppTopBanner from '@/components/layout/AppTopBanner.vue'
+import StagePanel from '@/components/layout/StagePanel.vue'
+import ChatPanel from '@/components/layout/ChatPanel.vue'
+import MobileDrawer from '@/components/layout/MobileDrawer.vue'
+import ConnectionBanner from '@/components/feedback/ConnectionBanner.vue'
 import { useConnectionStore } from '@/stores/connection'
+import { useSessionStore } from '@/stores/session'
+import { useUiStore } from '@/stores/ui'
+import { sessionService } from '@/services/sessionService'
+import { chatService } from '@/services/chatService'
+import { useResponsive } from '@/composables/useResponsive'
+import { useEmotionDriver } from '@/composables/useEmotionDriver'
 
 const connection = useConnectionStore()
-const { reachable, lastCheckAt, checking } = storeToRefs(connection)
+const session = useSessionStore()
+const ui = useUiStore()
+const message = useMessage()
+const { isMobile, isTablet } = storeToRefs(ui)
 
-onMounted(() => {
-  void connection.check()
+useResponsive()
+useEmotionDriver()
+
+let healthTimer: number | null = null
+
+onMounted(async () => {
+  await connection.check()
+  scheduleHealth()
+  if (!connection.reachable) return
+  try {
+    const list = await sessionService.refresh()
+    let target = list.find((s) => s.status === 'active') ?? list[0]
+    if (!target) target = await sessionService.create()
+    session.setCurrent(target.id)
+    await chatService.loadHistory(target.id)
+  } catch (e) {
+    message.error(e instanceof Error ? e.message : '初始化失败')
+  }
 })
 
-function formatTime(ts: number | null) {
-  if (!ts) return '—'
-  return new Date(ts).toLocaleTimeString()
+function scheduleHealth() {
+  if (healthTimer != null) return
+  healthTimer = window.setInterval(() => {
+    void connection.check()
+  }, 5000)
 }
 </script>
 
 <template>
-  <main class="home flex items-center justify-center min-h-100dvh p-6">
-    <NCard class="welcome" content-style="padding: 32px;">
-      <h1 class="m-0 mb-2 text-text-primary">One and Only</h1>
-      <p class="text-text-secondary mt-0">前端骨架已就绪，等待主页面接入。</p>
-
-      <NSpace align="center" class="mt-6">
-        <NTag :type="reachable ? 'success' : 'error'" round>
-          后端 {{ reachable ? '已连接' : '未连接' }}
-        </NTag>
-        <span class="text-text-secondary text-sm">最近检查：{{ formatTime(lastCheckAt) }}</span>
-        <NButton size="small" :loading="checking" @click="connection.check()">
-          重新检查
-        </NButton>
-      </NSpace>
-    </NCard>
-  </main>
+  <div class="app-shell" :class="{ mobile: isMobile, tablet: isTablet }">
+    <AppTopBanner />
+    <ConnectionBanner />
+    <main class="main">
+      <div class="stage-area">
+        <StagePanel />
+      </div>
+      <div class="chat-area">
+        <ChatPanel />
+      </div>
+    </main>
+    <MobileDrawer />
+  </div>
 </template>
 
 <style scoped>
-.home {
-  background: linear-gradient(135deg, var(--color-bg-base), var(--color-bg-soft));
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--color-bg-base);
 }
 
-.welcome {
-  max-width: 520px;
-  width: 100%;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 460px;
+  gap: 16px;
+  padding: 16px 20px 20px;
+  min-height: 0;
+}
+
+.stage-area,
+.chat-area {
+  min-height: 0;
+  display: flex;
+}
+
+.stage-area {
+  min-height: 60vh;
+}
+
+.app-shell.tablet .main {
+  grid-template-columns: 1fr;
+  grid-template-rows: 40vh minmax(0, 1fr);
+}
+
+.app-shell.mobile .main {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  gap: 0;
+  padding: 0;
+  position: relative;
+}
+
+.app-shell.mobile .stage-area {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.app-shell.mobile .chat-area {
+  position: relative;
+  z-index: 1;
+  height: calc(100dvh - 60px);
 }
 </style>
