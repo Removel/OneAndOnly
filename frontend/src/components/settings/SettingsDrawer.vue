@@ -11,7 +11,7 @@ const emotion = useEmotionStore()
 const live2d = useLive2DStore()
 const { showDebug } = storeToRefs(ui)
 const { vac, category } = storeToRefs(emotion)
-const { models, currentId, loading, error } = storeToRefs(live2d)
+const { models, currentId, loading, error, lastLoadedAt } = storeToRefs(live2d)
 
 onMounted(() => {
   // StagePanel 也会触发，store 内部已做去重；此处保证用户先打开抽屉时也能看到列表
@@ -26,15 +26,20 @@ function handlePick(id: string) {
 function handleReload() {
   void live2d.loadManifest(true).catch(() => undefined)
 }
+
+function formatLoadedAt(value: number | null) {
+  return value == null ? '未读取' : new Date(value).toLocaleTimeString()
+}
 </script>
 
 <template>
   <div class="settings">
     <NCollapse :default-expanded-names="['l2d', 'debug']" arrow-placement="right">
       <NCollapseItem title="L2D 模型" name="l2d">
-        <p class="muted">把模型文件夹直接放入 public/live2d/，再在 manifest.json 追加一项即可。</p>
+        <p class="muted">把模型文件夹放入 public/live2d/models/，再在 manifest.json 追加一项。</p>
 
         <div class="toolbar">
+          <span class="loaded-at">manifest：{{ formatLoadedAt(lastLoadedAt) }}</span>
           <NButton size="small" tertiary :loading="loading" @click="handleReload">
             <template #icon>
               <NIcon><span class="i-solar-refresh-bold-duotone" /></NIcon>
@@ -137,8 +142,15 @@ function handleReload() {
 
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin: 4px 0 8px;
+}
+
+.loaded-at {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
 }
 
 .placeholder {

@@ -9,7 +9,7 @@ import { useLive2D } from '@/composables/useLive2D'
 const emotion = useEmotionStore()
 const live2d = useLive2DStore()
 const { category } = storeToRefs(emotion)
-const { current, error, ready, loading } = storeToRefs(live2d)
+const { current, error, ready, loading, models } = storeToRefs(live2d)
 
 const { canvasRef, containerRef, bootstrap } = useLive2D()
 
@@ -51,7 +51,20 @@ onMounted(async () => {
           <p class="overlay-desc">{{ error }}</p>
         </div>
       </template>
-      <template v-else-if="loading || !current">
+      <template v-else-if="loading">
+        <div class="overlay-card">
+          <NSpin size="medium" />
+          <p class="overlay-desc">正在读取 Live2D 配置…</p>
+        </div>
+      </template>
+      <template v-else-if="models.length === 0">
+        <div class="overlay-card">
+          <span class="i-solar-folder-open-bold-duotone overlay-icon" />
+          <p class="overlay-title">尚未配置 Live2D 模型</p>
+          <p class="overlay-desc">按 public/live2d/README.md 放入模型并更新 manifest.json</p>
+        </div>
+      </template>
+      <template v-else-if="!current">
         <div class="overlay-card">
           <NSpin size="medium" />
           <p class="overlay-desc">正在准备 Live2D 舞台…</p>
