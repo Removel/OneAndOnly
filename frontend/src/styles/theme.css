@@ -1,48 +1,55 @@
 /**
- * 主题 token：暖色二次元基调
+ * 主题 token：亮白基底 + 青色强调（B 站式留白 + Mizuki 青）。
  * 所有组件读取 var(--color-*) 与 var(--radius-*)，禁止在组件中硬编码十六进制。
  */
 :root {
-  /* 背景层（由浅到深，全部偏暖） */
-  --color-bg-base: #fff8f1;
-  --color-bg-soft: #ffefe2;
-  --color-bg-card: #ffffffee;
-  --color-bg-elevated: #ffe4d6;
+  /* 背景层（冷白基调，靠留白与边线分层） */
+  --color-bg-base: #f6f9fb;
+  --color-bg-soft: #edf3f7;
+  --color-bg-card: #ffffff;
+  --color-bg-elevated: #ffffff;
 
-  /* 主色（樱粉系） */
-  --color-primary: #ff8fa3;
-  --color-primary-soft: #ffc2ce;
-  --color-primary-strong: #f46a86;
+  /* 边框 / 分割线 */
+  --color-border-light: #e3e8ec;
+  --color-border-hover: #c9d6dd;
 
-  /* 辅助色 */
-  --color-accent-peach: #ffb089;
-  --color-accent-cream: #ffd9a8;
-  --color-accent-mint: #b8e0c2;
-  --color-accent-lilac: #e5c8f0;
+  /* 主色（cyan 系，作为唯一 hero accent） */
+  --color-primary: #4fb8e6;
+  --color-primary-soft: #dbeff8;
+  --color-primary-strong: #2a93c7;
 
-  /* 文本（暖棕替代冷黑） */
-  --color-text-primary: #5a3e36;
-  --color-text-secondary: #8a6a5e;
+  /* 辅助色（冷色域内点缀，少量暖粉用于情感语义） */
+  --color-accent-aqua: #7dd3d8;
+  --color-accent-sky: #a8d8f0;
+  --color-accent-foam: #e6f4f8;
+  --color-accent-violet: #b8c8f0;
+  --color-accent-pink: #ff8ab8;
+
+  /* 文本（B 站式深灰，避开纯黑） */
+  --color-text-primary: #18191c;
+  --color-text-secondary: #61666d;
+  --color-text-tertiary: #9499a0;
   --color-text-inverse: #ffffff;
+  --color-text-link: #2a93c7;
 
   /* 状态色 */
-  --color-success: #7dc592;
-  --color-warning: #f2b65c;
-  --color-danger: #e97a7a;
+  --color-success: #5fbfa8;
+  --color-warning: #f0b860;
+  --color-danger: #e07878;
 
-  /* 圆角 / 阴影 */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 22px;
+  /* 圆角 / 阴影（轻投影，依赖留白与边线分层） */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
   --radius-pill: 999px;
-  --shadow-card: 0 6px 18px rgb(244 106 134 / 10%);
-  --shadow-float: 0 12px 32px rgb(244 106 134 / 16%);
+  --shadow-card: 0 2px 8px rgb(24 25 28 / 6%);
+  --shadow-float: 0 8px 24px rgb(24 25 28 / 12%);
 
-  /* 情绪驱动变量（默认中性，由 useEmotionDriver 实时改写） */
-  --aura-h: 18;
-  --aura-s: 70%;
-  --aura-l: 80%;
-  --aura-a: 0.35;
+  /* 情绪驱动变量（默认冷青基调，由 useEmotionDriver 实时改写） */
+  --aura-h: 200;
+  --aura-s: 60%;
+  --aura-l: 75%;
+  --aura-a: 0.3;
 }
 
 html,
@@ -53,4 +60,11 @@ body,
   color: var(--color-text-primary);
   font-family:
     "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+/* Naive UI 按钮内文本基线对齐：
+   reset.css 把 body line-height 设为 1.6，会让按钮中的纯文本节点相对图标整体下沉，
+   导致图标偏上、文字偏下。锁死按钮内容容器的行高即可恢复对齐。 */
+.n-button .n-button__content {
+  line-height: 1;
 }

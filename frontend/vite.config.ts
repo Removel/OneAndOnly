@@ -5,6 +5,7 @@ import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
+import { live2dTexturePlugin } from './vite-plugin-live2d-texture'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -14,6 +15,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       UnoCSS(),
+      live2dTexturePlugin(),
       AutoImport({
         imports: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
         dts: 'src/types/auto-imports.d.ts',

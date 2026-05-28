@@ -19,37 +19,51 @@ export default defineConfig({
   transformers: [transformerDirectives(), transformerVariantGroup()],
   theme: {
     colors: {
-      // 主色：樱粉
+      // 主色：天空青
       primary: {
-        DEFAULT: '#FF8FA3',
-        soft: '#FFC2CE',
-        strong: '#F46A86',
+        DEFAULT: '#4FB8E6',
+        soft: '#DBEFF8',
+        strong: '#2A93C7',
       },
-      // 辅助色：暖色调点缀
+      // 辅助色：冷色域点缀 + 少量暖粉
       accent: {
-        peach: '#FFB089',
-        cream: '#FFD9A8',
-        mint: '#B8E0C2',
-        lilac: '#E5C8F0',
+        aqua: '#7DD3D8',
+        sky: '#A8D8F0',
+        foam: '#E6F4F8',
+        violet: '#B8C8F0',
+        pink: '#FF8AB8',
       },
-      // 文本：暖棕替代冷黑
+      // 文本：B 站式深灰
       text: {
-        primary: '#5A3E36',
-        secondary: '#8A6A5E',
+        primary: '#18191C',
+        secondary: '#61666D',
+        tertiary: '#9499A0',
         inverse: '#FFFFFF',
+        link: '#2A93C7',
       },
-      // 背景层
+      // 背景层（冷白基底）
       bg: {
-        base: '#FFF8F1',
-        soft: '#FFEFE2',
-        card: '#FFFFFFEE',
-        elevated: '#FFE4D6',
+        base: '#F6F9FB',
+        soft: '#EDF3F7',
+        card: '#FFFFFF',
+        elevated: '#FFFFFF',
+      },
+      // 边框
+      border: {
+        light: '#E3E8EC',
+        hover: '#C9D6DD',
+      },
+      // 状态
+      status: {
+        success: '#5FBFA8',
+        warning: '#F0B860',
+        danger: '#E07878',
       },
     },
     borderRadius: {
-      sm: '8px',
-      md: '14px',
-      lg: '22px',
+      sm: '6px',
+      md: '10px',
+      lg: '16px',
       pill: '9999px',
     },
     breakpoints: {

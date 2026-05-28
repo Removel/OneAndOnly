@@ -1,0 +1,281 @@
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { NButton, NCollapse, NCollapseItem, NIcon, NSpin, NSwitch, NTag } from 'naive-ui'
+import { useUiStore } from '@/stores/ui'
+import { useEmotionStore } from '@/stores/emotion'
+import { useLive2DStore } from '@/stores/live2d'
+
+const ui = useUiStore()
+const emotion = useEmotionStore()
+const live2d = useLive2DStore()
+const { showDebug } = storeToRefs(ui)
+const { vac, category } = storeToRefs(emotion)
+const { models, currentId, loading, error } = storeToRefs(live2d)
+
+onMounted(() => {
+  // StagePanel 也会触发，store 内部已做去重；此处保证用户先打开抽屉时也能看到列表
+  void live2d.loadManifest().catch(() => undefined)
+})
+
+function handlePick(id: string) {
+  if (id === currentId.value) return
+  live2d.setCurrent(id)
+}
+
+function handleReload() {
+  void live2d.loadManifest(true).catch(() => undefined)
+}
+</script>
+
+<template>
+  <div class="settings">
+    <NCollapse :default-expanded-names="['l2d', 'debug']" arrow-placement="right">
+      <NCollapseItem title="L2D 模型" name="l2d">
+        <p class="muted">把模型文件夹直接放入 public/live2d/，再在 manifest.json 追加一项即可。</p>
+
+        <div class="toolbar">
+          <NButton size="small" tertiary :loading="loading" @click="handleReload">
+            <template #icon>
+              <NIcon><span class="i-solar-refresh-bold-duotone" /></NIcon>
+            </template>
+            重新读取 manifest
+          </NButton>
+        </div>
+
+        <div v-if="loading" class="placeholder">
+          <NSpin size="small" />
+          <span>正在读取 manifest…</span>
+        </div>
+
+        <div v-else-if="error" class="placeholder error">
+          <span class="i-solar-cloud-cross-bold-duotone placeholder-icon" />
+          <span class="error-text">{{ error }}</span>
+        </div>
+
+        <div v-else-if="models.length === 0" class="placeholder">
+          <span class="i-solar-folder-open-bold-duotone placeholder-icon" />
+          <span>manifest 中没有可用模型</span>
+        </div>
+
+        <ul v-else class="model-list">
+          <li
+            v-for="m in models"
+            :key="m.id"
+            class="model-item"
+            :class="{ active: m.id === currentId }"
+            role="button"
+            tabindex="0"
+            @click="handlePick(m.id)"
+            @keydown.enter.prevent="handlePick(m.id)"
+          >
+            <div class="model-thumb">
+              <img v-if="m.avatar" :src="m.avatar" :alt="m.name" />
+              <span v-else class="i-solar-magic-stick-3-bold-duotone" />
+            </div>
+            <div class="model-meta">
+              <p class="model-name">{{ m.name }}</p>
+              <p class="model-id">{{ m.id }}</p>
+            </div>
+            <NTag
+              v-if="m.id === currentId"
+              size="small"
+              type="info"
+              :bordered="false"
+              class="active-tag"
+            >
+              使用中
+            </NTag>
+          </li>
+        </ul>
+      </NCollapseItem>
+
+      <NCollapseItem title="风格 / LoRA" name="style">
+        <p class="muted">暂未开放，下个版本提供风格化文本与 LoRA 切换入口。</p>
+      </NCollapseItem>
+
+      <NCollapseItem title="调试" name="debug">
+        <div class="row">
+          <span>显示 VAC 调试面板</span>
+          <NSwitch v-model:value="showDebug" />
+        </div>
+        <div v-if="showDebug" class="debug-card">
+          <p class="row">
+            <span>类别</span>
+            <NTag size="small" type="info" :bordered="false">{{ category }}</NTag>
+          </p>
+          <p class="row">
+            <span>Valence</span>
+            <span class="num">{{ vac.valence.toFixed(2) }}</span>
+          </p>
+          <p class="row">
+            <span>Arousal</span>
+            <span class="num">{{ vac.arousal.toFixed(2) }}</span>
+          </p>
+          <p class="row">
+            <span>Control</span>
+            <span class="num">{{ vac.control.toFixed(2) }}</span>
+          </p>
+        </div>
+      </NCollapseItem>
+    </NCollapse>
+  </div>
+</template>
+
+<style scoped>
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.muted {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 4px 0 8px;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  border: 1px dashed var(--color-border-light);
+}
+
+.placeholder.error {
+  color: var(--color-danger);
+  border-color: rgb(224 120 120 / 35%);
+  background: rgb(224 120 120 / 8%);
+}
+
+.error-text {
+  word-break: break-word;
+}
+
+.placeholder-icon {
+  font-size: 22px;
+  color: var(--color-primary);
+}
+
+.placeholder.error .placeholder-icon {
+  color: var(--color-danger);
+}
+
+.model-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.model-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.model-item:hover {
+  background: var(--color-accent-foam);
+  border-color: var(--color-border-light);
+}
+
+.model-item.active {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.model-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  font-size: 24px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.model-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.model-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.model-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-id {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.active-tag {
+  flex-shrink: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.debug-card {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-border-light);
+}
+
+.num {
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+  color: var(--color-primary-strong);
+}
+</style>
