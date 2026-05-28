@@ -2,7 +2,7 @@ import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
 import JSONBig from 'json-bigint'
 import { BackendError, NetworkError, type Result } from '@/types/result'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
 /**
  * 后端使用雪花算法生成 18 位 long ID，超出 JS Number.MAX_SAFE_INTEGER (16 位)。
@@ -54,10 +54,36 @@ httpClient.interceptors.response.use(
 )
 
 export async function ping(): Promise<boolean> {
-  try {
-    const res = await axios.get<{ status: string }>(`${baseURL}/health`, { timeout: 5000 })
-    return res.data?.status === 'healthy'
-  } catch {
-    return false
+  const urls = [`${baseURL}/health`, '/health']
+
+  for (const url of urls) {
+    try {
+      const res = await axios.get<{ status: string }>(url, { timeout: 5000 })
+      if (res.data?.status === 'healthy') return true
+    } catch {
+      // 继续尝试下一个地址：直连后端失败时，开发环境可走 Vite 同源代理。
+    }
   }
+  return false
+}
+
+export async function pingWithReason(): Promise<{ ok: boolean; checked: string[]; error?: string }> {
+  const urls = [`${baseURL}/health`, '/health']
+  const errors: string[] = []
+
+  for (const url of urls) {
+    try {
+      const res = await axios.get<{ status: string }>(url, { timeout: 5000 })
+      if (res.data?.status === 'healthy') return { ok: true, checked: urls }
+      errors.push(`${url}: status=${res.data?.status ?? 'unknown'}`)
+    } catch (error) {
+      errors.push(`${url}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
+  return { ok: false, checked: urls, error: errors.join('；') }
+}
+
+export function getApiBaseURL() {
+  return baseURL
 }

@@ -4,11 +4,11 @@
  * 使用全局加载的 PIXI.js 和 pixi-live2d-display（通过 index.html script 标签）
  */
 import { onBeforeUnmount, ref, watch } from 'vue'
-import '@/lib/live2dBootstrap'
 import { storeToRefs } from 'pinia'
 import { useLive2DStore } from '@/stores/live2d'
 import { useEmotionStore } from '@/stores/emotion'
 import { DEFAULT_TRANSFORM, type Live2DModelDescriptor } from '@/types/live2d'
+import { ensureLive2DRuntime } from '@/composables/useLive2DRuntime'
 
 export function useLive2D() {
   const store = useLive2DStore()
@@ -19,22 +19,24 @@ export function useLive2D() {
   const canvasRef = ref<HTMLCanvasElement | null>(null)
   const containerRef = ref<HTMLElement | null>(null)
 
-  let app: any = null
-  let model: any = null
+  let app: PixiApplicationInstance | null = null
+  let model: PixiLive2DModelInstance | null = null
   let resizeObserver: ResizeObserver | null = null
 
-  async function ensureApp(): Promise<any> {
+  async function ensureApp(desc: Live2DModelDescriptor): Promise<PixiApplicationInstance | null> {
     if (app) return app
     if (!canvasRef.value || !containerRef.value) return null
 
-    const coreOk = await ensureCubismCore()
-    if (!coreOk) {
-      store.setError('缺少 Cubism Core 运行时')
+    await ensureLive2DRuntime(desc.version ?? 'cubism4')
+
+    const { clientWidth, clientHeight } = containerRef.value
+    const pixi = window.PIXI
+    if (!pixi) {
+      store.setError('缺少 PIXI.js 运行时')
       return null
     }
 
-    const { clientWidth, clientHeight } = containerRef.value
-    app = new window.PIXI.Application({
+    app = new pixi.Application({
       view: canvasRef.value,
       width: Math.max(clientWidth, 1),
       height: Math.max(clientHeight, 1),
@@ -47,27 +49,6 @@ export function useLive2D() {
 
     bindResize()
     return app
-  }
-
-  function ensureCubismCore(): Promise<boolean> {
-    if (typeof (window as any).Live2DCubismCore !== 'undefined') {
-      return Promise.resolve(true)
-    }
-    return new Promise((resolve) => {
-      const existing = document.querySelector<HTMLScriptElement>('script[data-live2d-core="1"]')
-      if (existing) {
-        existing.addEventListener('load', () => resolve(true), { once: true })
-        existing.addEventListener('error', () => resolve(false), { once: true })
-        return
-      }
-      const script = document.createElement('script')
-      script.src = '/live2d/core/live2dcubismcore.min.js'
-      script.async = true
-      script.dataset.live2dCore = '1'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.head.appendChild(script)
-    })
   }
 
   function bindResize() {
@@ -91,17 +72,16 @@ export function useLive2D() {
     const modelWidth = model.internalModel?.width || model.width || 1
     const modelHeight = model.internalModel?.height || model.height || 1
     const baseScale = Math.min(w / modelWidth, h / modelHeight)
+    const fitScale = Math.min(w / modelWidth, h / modelHeight) * 0.9
+    const targetScale = Math.min(baseScale * t.scale * 10, fitScale)
 
-    model.scale.set(baseScale * t.scale * 10)
+    model.scale.set(targetScale)
     model.anchor.set(0.5, 0.5)
     model.x = w * (0.5 + t.x)
     model.y = h * (0.5 + t.y)
   }
 
   async function loadCurrent() {
-    const application = await ensureApp()
-    if (!application) return
-
     const desc = current.value
     if (!desc) return
 
@@ -109,6 +89,9 @@ export function useLive2D() {
     store.setError(null)
 
     try {
+      const application = await ensureApp(desc)
+      if (!application) return
+
       console.log('[Live2D] 开始加载模型:', desc.entry)
 
       // 检查 Live2DModel 是否可用
@@ -130,7 +113,7 @@ export function useLive2D() {
       if (textures && textures.length > 0) {
         console.log('[Live2D] 等待', textures.length, '个纹理加载...')
         await Promise.all(
-          textures.map((texture: any, index: number) => {
+          textures.map((texture, index) => {
             return new Promise<void>((resolve) => {
               if (texture?.baseTexture) {
                 if (texture.baseTexture.valid) {
@@ -188,7 +171,7 @@ export function useLive2D() {
       store.setReady(true)
       console.log('[Live2D] 模型渲染就绪')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg = formatLive2DError(e)
       console.error('[Live2D] 加载失败:', e)
       store.setError(`加载模型失败：${msg}`)
       destroyModel()
@@ -250,4 +233,20 @@ export function useLive2D() {
     containerRef,
     bootstrap: loadCurrent,
   }
+}
+
+function formatLive2DError(error: unknown) {
+  if (error instanceof Error) {
+    const cause = (error as Error & { cause?: unknown }).cause
+    const causeText = cause == null ? '' : `；cause=${String(cause)}`
+    return `${error.message || error.name || 'Unknown error'}${causeText}`
+  }
+  if (typeof error === 'object' && error !== null) {
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return Object.prototype.toString.call(error)
+    }
+  }
+  return String(error)
 }

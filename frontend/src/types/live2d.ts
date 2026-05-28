@@ -27,6 +27,8 @@ export interface Live2DModelDescriptor {
    * 形如 "/live2d/<model_id>/.../xxx.model3.json"
    */
   entry: string
+  /** 模型版本；model3.json 使用 cubism4，旧 model.json 使用 cubism2 */
+  version?: 'cubism2' | 'cubism4'
   /** 列表项预览图，可选 */
   avatar?: string
   /** 摆放位置与缩放，可选；缺省走 useLive2D 内部默认值 */
@@ -41,12 +43,12 @@ export interface Live2DModelDescriptor {
 }
 
 export interface Live2DManifest {
-  current: string
+  current?: string
   models: Live2DModelDescriptor[]
 }
 
 export const DEFAULT_TRANSFORM: Live2DTransform = {
-  scale: 0.18,
+  scale: 0.08,
   x: 0,
-  y: -0.05,
+  y: 0.02,
 }

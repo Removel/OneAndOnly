@@ -4,14 +4,17 @@ import { NButton, NIcon } from 'naive-ui'
 import { useConnectionStore } from '@/stores/connection'
 
 const connection = useConnectionStore()
-const { reachable, checking } = storeToRefs(connection)
+const { reachable, checking, lastError, apiBaseURL } = storeToRefs(connection)
 </script>
 
 <template>
   <transition name="slide-down">
     <div v-if="!reachable" class="banner">
       <span class="i-solar-cloud-cross-bold-duotone icon" />
-      <p class="text">后端未连接，发送已禁用。请确认 backend 服务在 8000 端口运行。</p>
+      <p class="text">
+        后端未连接，发送已禁用。当前检查 {{ apiBaseURL }}，可点重试刷新状态。
+        <span v-if="lastError" class="detail">{{ lastError }}</span>
+      </p>
       <NButton size="tiny" tertiary :loading="checking" @click="connection.check()">
         <template #icon>
           <NIcon><span class="i-solar-refresh-bold-duotone" /></NIcon>
@@ -42,6 +45,14 @@ const { reachable, checking } = storeToRefs(connection)
 .text {
   margin: 0;
   flex: 1;
+}
+
+.detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  word-break: break-word;
 }
 
 .slide-down-enter-active,
