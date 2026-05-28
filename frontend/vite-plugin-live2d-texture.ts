@@ -12,8 +12,13 @@ import path from 'node:path'
  * 指向实际存在的纹理文件。
  */
 export function live2dTexturePlugin(): Plugin {
+  let publicDir = ''
+
   return {
     name: 'vite-plugin-live2d-texture',
+    configResolved(config) {
+      publicDir = config.publicDir
+    },
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         if (!req.url?.endsWith('.model3.json')) {
@@ -26,36 +31,7 @@ export function live2dTexturePlugin(): Plugin {
         }
 
         try {
-          const content = fs.readFileSync(filePath, 'utf-8')
-          const json = JSON.parse(content)
-
-          // 检查并修正纹理路径
-          if (json.FileReferences?.Textures) {
-            const modelDir = path.dirname(filePath)
-            const modelName = path.basename(filePath, '.model3.json')
-
-            json.FileReferences.Textures = json.FileReferences.Textures.map((texPath: string) => {
-              // 如果纹理文件直接存在，不修改
-              const directPath = path.join(modelDir, texPath)
-              if (fs.existsSync(directPath)) {
-                return texPath
-              }
-
-              // 尝试在常见的分辨率子目录中查找
-              const resolutions = ['4096', '2048', '1024', '512']
-              for (const res of resolutions) {
-                const subDir = `${modelName}.${res}`
-                const subPath = path.join(modelDir, subDir, texPath)
-                if (fs.existsSync(subPath)) {
-                  return `${subDir}/${texPath}`
-                }
-              }
-
-              // 找不到就返回原路径（会导致加载失败，但至少不会静默错误）
-              return texPath
-            })
-          }
-
+          const json = rewriteModelTextures(filePath)
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify(json))
         } catch (err) {
@@ -64,5 +40,55 @@ export function live2dTexturePlugin(): Plugin {
         }
       })
     },
+    writeBundle(options) {
+      if (!options.dir) return
+
+      const live2dDir = path.join(options.dir, 'live2d')
+      if (!fs.existsSync(live2dDir)) return
+
+      for (const filePath of walk(live2dDir)) {
+        if (!filePath.endsWith('.model3.json')) continue
+        rewriteModelTexturesInPlace(filePath)
+      }
+    },
   }
+}
+
+function rewriteModelTextures(filePath: string): unknown {
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const json = JSON.parse(content)
+
+  if (json.FileReferences?.Textures) {
+    const modelDir = path.dirname(filePath)
+    const modelName = path.basename(filePath, '.model3.json')
+
+    json.FileReferences.Textures = json.FileReferences.Textures.map((texPath: string) => {
+      const directPath = path.join(modelDir, texPath)
+      if (fs.existsSync(directPath)) return texPath
+
+      const resolutions = ['4096', '2048', '1024', '512']
+      for (const res of resolutions) {
+        const subDir = `${modelName}.${res}`
+        const subPath = path.join(modelDir, subDir, texPath)
+        if (fs.existsSync(subPath)) return `${subDir}/${texPath}`
+      }
+
+      return texPath
+    })
+  }
+
+  return json
+}
+
+function rewriteModelTexturesInPlace(filePath: string) {
+  const before = fs.readFileSync(filePath, 'utf-8')
+  const after = `${JSON.stringify(rewriteModelTextures(filePath), null, 2)}\n`
+  if (before !== after) fs.writeFileSync(filePath, after, 'utf-8')
+}
+
+function walk(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(dir, entry.name)
+    return entry.isDirectory() ? walk(fullPath) : [fullPath]
+  })
 }
