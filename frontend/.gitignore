@@ -39,6 +39,10 @@ src/types/components.d.ts
 
 # Live2D 模型资源（仓库不内置，由用户自行放入）
 public/live2d/*/
+!public/live2d/models/
+public/live2d/models/*/
+!public/live2d/models/.gitkeep
 !public/live2d/manifest.json
+!public/live2d/README.md
 !public/live2d/.gitkeep
 public/live2d/core/
