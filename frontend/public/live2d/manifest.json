@@ -1,5 +1,5 @@
 {
-  "current": "haru",
+  "current": "mao_pro",
   "models": [
     {
       "id": "haru",
@@ -12,6 +12,38 @@
         "calm": "F02",
         "sad": "F03",
         "angry": "F04",
+        "neutral": null
+      },
+      "idleMotionGroup": "Idle"
+    },
+    {
+      "id": "Wanko",
+      "name": "Wanko",
+      "version": "cubism4",
+      "entry": "/live2d/models/Wanko/Wanko.model3.json",
+      "avatar": "/live2d/models/Wanko/Wanko.1024/texture_00.png",
+      "transform": { "scale": 0.18, "x": 0, "y": -0.05 },
+      "expressionsByEmotion": {
+        "happy": null,
+        "calm": null,
+        "sad": null,
+        "angry": null,
+        "neutral": null
+      },
+      "idleMotionGroup": "Idle"
+    },
+    {
+      "id": "mao_pro",
+      "name": "Mao Pro",
+      "version": "cubism4",
+      "entry": "/live2d/models/mao_pro_zh/runtime/mao_pro.model3.json",
+      "avatar": "/live2d/models/mao_pro_zh/runtime/mao_pro.4096/texture_00.png",
+      "transform": { "scale": 0.18, "x": 0, "y": -0.05 },
+      "expressionsByEmotion": {
+        "happy": "exp_01",
+        "calm": "exp_02",
+        "sad": "exp_03",
+        "angry": "exp_04",
         "neutral": null
       },
       "idleMotionGroup": "Idle"

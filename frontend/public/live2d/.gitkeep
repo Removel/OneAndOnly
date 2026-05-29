@@ -1,7 +1,0 @@
-# 此目录用于存放 Live2D 模型资源，仓库不内置任何模型。
-#
-# 如何添加模型：
-# 1. 把模型文件夹（含 model3.json / textures / motions / expressions 等）复制到本目录下。
-# 2. 在 manifest.json 的 models 数组里追加一项，描述 entry / avatar / transform / expressions / motions。
-#
-# Cubism Core 运行时（live2dcubismcore.min.js）也不入库，请按 README 指引自行下载放入 ./core/。
