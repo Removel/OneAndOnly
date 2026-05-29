@@ -8,7 +8,7 @@ import os
 查询向量数据库工具，库设计：
 每条记忆向量绑定一级类目：
 - `category`：一级大类
-- `importance`：normal/important(专门的对事件)
+- `importance`：low/medium/high
 - `timestamp`：对话时间戳
 """
 

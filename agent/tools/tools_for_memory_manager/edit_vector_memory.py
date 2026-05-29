@@ -2,7 +2,7 @@
 编辑向量数据库工具，库设计：
 每条记忆向量绑定一级类目：
 - `category`：一级大类
-- `importance`：important/normal
+- `importance`：high/medium/low
 - `timestamp`：对话时间戳
 """
 import os
@@ -128,7 +128,7 @@ def update_memory_importance(doc_id: str, new_importance: str) -> str:
     @param importance: 重要性级别
     @return: 更新状态信息
     """
-    valid_importance_levels = ["important", "normal"]
+    valid_importance_levels = ["high", "medium", "low"]
     
     if not doc_id.strip():
         return "错误：doc_id不能为空"
