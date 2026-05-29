@@ -2,7 +2,7 @@
 存储向量数据库工具，库设计：
 每条记忆向量绑定一级类目：
 - `category`：一级大类
-- `importance`：important/normal
+- `importance`：high/medium/low
 - `timestamp`：对话时间戳
 """
 import os
@@ -20,15 +20,15 @@ def collect_to_vector_db():
     return collection
 
 @tool
-def store_event(content: str, timestamp: str, importance: str = "normal"):
+def store_event(content: str, timestamp: str, importance: str = "medium"):
     """
     向向量数据库当中写入事件记忆
     @param content: 事件记忆内容
     @param timestamp: 事件记忆时间戳
-    @param importance: 事件记忆重要性，默认normal
+    @param importance: 事件记忆重要性，默认medium
     @return: 成功状态信息
     """
-    valid_importance_levels = ["important", "normal"]
+    valid_importance_levels = ["high", "medium", "low"]
     
     if importance not in valid_importance_levels:
         return f"错误：importance必须从以下列表中选择：{', '.join(valid_importance_levels)}"
@@ -105,7 +105,7 @@ def store_memory(content: str, category: str):
             metadatas=[{
                 "id": doc_id,  # 保存ID到元数据中便于查找
                 "category": category,
-                "importance": "normal",  # 默认为普通重要性
+                "importance": "medium",  # 默认为中等重要性
                 "timestamp": current_timestamp,
                 "date": date_timestamp,  # 存储为整数时间戳
                 "event_type": "memory"  # 标识为记忆而非事件
