@@ -106,7 +106,7 @@ export function useLive2D() {
 
       console.log('[Live2D] 模型加载完成，等待纹理...')
       console.log('[Live2D] internalModel:', next.internalModel)
-
+/*
       // 关键修复：等待纹理完全加载
       // pixi-live2d-display 0.4.0 的 from() 不会等待纹理，需要手动等待
       const textures = next.internalModel?.textures
@@ -146,7 +146,8 @@ export function useLive2D() {
       } else {
         console.warn('[Live2D] 没有找到纹理数组，可能加载失败')
       }
-
+*/
+      await (next as any).loaded;
       // 销毁旧模型
       destroyModel()
 
