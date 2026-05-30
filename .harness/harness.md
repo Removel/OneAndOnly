@@ -29,6 +29,7 @@
 - **Web 前端设计**: 查看 [doc/Web前端设计书.md](./doc/Web前端设计书.md)
 - **智能体设计**: 查看 [doc/状态、节点与边设计.md](./doc/状态、节点与边设计.md)
 - **记忆系统设计**: 查看 [doc/人物记忆向量数据库 Chroma 分类体系设计.md](./doc/人物记忆向量数据库 Chroma 分类体系设计.md)
+- **Bug 记录规范**: 查看 [rules/bug_record_rules.md](./rules/bug_record_rules.md)
 
 ## 🏗️ 项目概览
 

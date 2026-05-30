@@ -11,17 +11,20 @@ class ChatManager:
     def __init__(self):
         self._compiled_graph = None
         self._checkpointer = None
+        self._conn = None
 
     def get_checkpointer(self):
+        if self._checkpointer is None:
+            db_path = Path(__file__).parent.parent / "database" / "agent" /"checkpoints.db"
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+            self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
+            self._checkpointer = SqliteSaver(self._conn)
         return self._checkpointer
 
     def get_compiled_graph(self):
         if self._compiled_graph is None:
             graph = build_graph()
-            db_path = Path(__file__).parent.parent / "database" / "agent" /"checkpoints.db"
-            db_path.parent.mkdir(parents=True, exist_ok=True)
-            conn = sqlite3.connect(str(db_path), check_same_thread=False)
-            self._checkpointer = SqliteSaver(conn)
+            self.get_checkpointer()
             self._compiled_graph = graph.compile(checkpointer=self._checkpointer)
         return self._compiled_graph
 
@@ -29,10 +32,8 @@ class ChatManager:
         config = {"configurable": {"thread_id": thread_id}}
         compiled_graph = self.get_compiled_graph()
         state = compiled_graph.get_state(config)
-        # state.values 里就是当前所有 channel 的值
         return state.values.get("messages", []) if state else []
 
-    # 清空对话历史
     def clear_history(self, thread_id: Optional[str] = None):
         if thread_id and self._checkpointer:
             try:
@@ -41,9 +42,14 @@ class ChatManager:
             except Exception as e:
                 print(f"清空对话历史失败: {str(e)}")
                 import traceback
-
                 traceback.print_exc()
 
+    def close(self):
+        if self._conn:
+            self._conn.close()
+            self._conn = None
+            self._checkpointer = None
+            self._compiled_graph = None
 
 
 # 聊天管理类实体

@@ -68,3 +68,18 @@ body,
 .n-button .n-button__content {
   line-height: 1;
 }
+
+/* 导航栏按钮可见性增强 */
+.banner-btn.n-button--quaternary-type {
+  color: var(--color-text-secondary) !important;
+}
+
+.banner-btn.n-button--quaternary-type:hover {
+  color: var(--color-primary-strong) !important;
+  background-color: var(--color-bg-soft) !important;
+}
+
+.banner-btn.n-button--quaternary-type.active {
+  color: var(--color-primary-strong) !important;
+  background-color: var(--color-primary-soft) !important;
+}

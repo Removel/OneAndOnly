@@ -23,9 +23,9 @@ def collect_to_vector_db():
 def store_event(content: str, timestamp: str, importance: str = "medium"):
     """
     向向量数据库当中写入事件记忆
-    @param content: 事件记忆内容
-    @param timestamp: 事件记忆时间戳
-    @param importance: 事件记忆重要性，默认medium
+    @param content: 事件记忆内容，你必须总结对话内容，不能直接写入原始对话
+    @param timestamp: 事件记忆时间戳，你必须根据当前对话内容推断出时间戳
+    @param importance: 事件记忆重要性，默认medium，high/medium/low
     @return: 成功状态信息
     """
     valid_importance_levels = ["high", "medium", "low"]

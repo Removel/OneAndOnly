@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from backend.entity.pojo.Base import Base
 import os
 
@@ -11,10 +12,11 @@ DATABASE_DIR = os.path.join(PROJECT_ROOT, 'database', 'backend')
 DATABASE_FILE = os.path.join(DATABASE_DIR, 'conversation.db')
 DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_FILE}')
 
-# 创建数据库引擎
+# 创建数据库引擎 - SQLite使用NullPool避免连接池问题
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False},  # SQLite需要这个参数
+    poolclass=NullPool,  # SQLite不需要连接池，使用NullPool
     echo=False  # 设置为True可以看到SQL语句
 )
 

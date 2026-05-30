@@ -37,18 +37,35 @@ watch(
 <style scoped>
 .message-list {
   height: 100%;
+  max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 18px 18px 6px;
   scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .message-list::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
+}
+
+.message-list::-webkit-scrollbar-track {
+  background: var(--color-bg-soft);
+  border-radius: 5px;
 }
 
 .message-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-light);
-  border-radius: 999px;
+  background: var(--color-border-hover);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.message-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+  background-clip: padding-box;
 }
 
 .empty {

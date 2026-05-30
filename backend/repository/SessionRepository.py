@@ -9,20 +9,10 @@ from backend.exception.Exceptions import DatabaseException
 
 class SessionRepository:
     def __init__(self):
-        self.db: Optional[Session] = None
-    
-    def __enter__(self):
-        self.db = SessionLocal()
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.db:
-            self.db.close()
+        pass
     
     def _get_db(self) -> Session:
-        if self.db is None:
-            self.db = SessionLocal()
-        return self.db
+        return SessionLocal()
 
     
     def create(self) -> SessionPOJO:
@@ -31,17 +21,18 @@ class SessionRepository:
         :return: 创建的会话实体
         :raises DatabaseException: 创建会话失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             new_session = SessionPOJO()
             db.add(new_session)
             db.commit()
             db.refresh(new_session)
             return new_session
         except Exception as e:
-            db = self._get_db()
             db.rollback()
             raise DatabaseException(msg=f"创建会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()
     
     def delete(self, session_id: int):
         """
@@ -49,17 +40,18 @@ class SessionRepository:
         :param session_id: 要删除的会话ID
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             operated_session = db.query(SessionPOJO).filter_by(id=session_id).first()
             if operated_session:
                 operated_session.status = 'deleted'
                 operated_session.updated_at = datetime.now()
                 db.commit()
         except Exception as e:
-            db = self._get_db()
             db.rollback()
             raise DatabaseException(msg=f"删除会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()
 
     def update_session(self, session_id: int, session_data: Dict[str, Any]):
         """
@@ -68,8 +60,8 @@ class SessionRepository:
         :param session_data: 要更新的会话数据
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             operated_session = db.query(SessionPOJO).filter_by(id=session_id).first()
             if operated_session:
                 for field, value in session_data.items():
@@ -81,9 +73,10 @@ class SessionRepository:
                 operated_session.updated_at = datetime.now()
                 db.commit()
         except Exception as e:
-            db = self._get_db()
             db.rollback()
             raise DatabaseException(msg=f"更新会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()
 
     
     def update_last_activity(self, session_id: int):
@@ -92,17 +85,18 @@ class SessionRepository:
         :param session_id: 会话ID
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             operated_session = db.query(SessionPOJO).filter_by(id=session_id).first()
             if operated_session:
                 operated_session.last_activity_at = datetime.now()
                 operated_session.updated_at = datetime.now()
                 db.commit()
         except Exception as e:
-            db = self._get_db()
             db.rollback()
             raise DatabaseException(msg=f"更新最后活动时间失败: {str(e)}", cause=e)
+        finally:
+            db.close()
 
     def get_active_sessions(self) -> List[SessionPOJO]:
         """
@@ -110,8 +104,8 @@ class SessionRepository:
         :return: 活跃会话列表
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             session_list = (
                 db.query(SessionPOJO)
                 .filter_by(status="active")
@@ -121,6 +115,8 @@ class SessionRepository:
             return cast(List[SessionPOJO], session_list)
         except Exception as e:
             raise DatabaseException(msg=f"获取活跃会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()
     
     def get_all_sessions(self) -> List[SessionPOJO]:
         """
@@ -128,8 +124,8 @@ class SessionRepository:
         :return: 所有会话列表
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             session_list = (
                 db.query(SessionPOJO)
                 .order_by(desc(SessionPOJO.last_activity_at))
@@ -138,6 +134,8 @@ class SessionRepository:
             return cast(List[SessionPOJO], session_list)
         except Exception as e:
             raise DatabaseException(msg=f"获取所有会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()
     
     def archive_session(self, session_id: int):
         """
@@ -145,17 +143,18 @@ class SessionRepository:
         :param session_id: 会话ID
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             operated_session = db.query(SessionPOJO).filter_by(id=session_id).first()
             if operated_session:
                 operated_session.status = 'archived'
                 operated_session.updated_at = datetime.now()
                 db.commit()
         except Exception as e:
-            db = self._get_db()
             db.rollback()
             raise DatabaseException(msg=f"归档会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()
 
     def get_session_by_session_id(self, session_id: int) -> Optional[SessionPOJO]:
         """
@@ -164,11 +163,13 @@ class SessionRepository:
         :return: 会话实体，如果不存在则返回None
         :raises DatabaseException: 数据库操作失败时抛出
         """
+        db = self._get_db()
         try:
-            db = self._get_db()
             operated_session = db.query(SessionPOJO).filter_by(id=session_id).first()
             if operated_session:
                 return cast(SessionPOJO, operated_session)
             return None
         except Exception as e:
             raise DatabaseException(msg=f"查询会话失败: {str(e)}", cause=e)
+        finally:
+            db.close()

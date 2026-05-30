@@ -173,12 +173,19 @@ function handle(action: Action) {
   box-shadow: 0 0 0 3px rgb(95 191 168 / 25%);
 }
 
+.banner-btn {
+  color: var(--color-text-secondary) !important;
+  background: var(--color-bg-soft) !important;
+}
+
 .banner-btn:hover {
-  color: var(--color-primary-strong);
+  color: var(--color-primary-strong) !important;
+  background: var(--color-bg-hover) !important;
 }
 
 .banner-btn.active {
-  color: var(--color-primary-strong);
+  color: var(--color-primary-strong) !important;
+  background: var(--color-primary-soft) !important;
 }
 
 @media (max-width: 767.98px) {
