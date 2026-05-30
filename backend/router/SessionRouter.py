@@ -1,5 +1,6 @@
 import logging
 from typing import List
+import asyncio
 
 from fastapi import APIRouter, Depends
 
@@ -14,6 +15,7 @@ session_router = APIRouter(prefix="/api/session", tags=["session"])
 
 
 def get_session_service():
+    logger.debug("创建SessionService实例")
     return SessionService()
 
 
@@ -24,12 +26,17 @@ async def get_active_sessions(service: SessionService = Depends(get_session_serv
     :param service: 会话服务实例
     :return: 所有会话信息包装在Result中
     """
-    logger.info(f"获取所有活跃会话请求")
+    logger.info("获取所有活跃会话请求")
     
-    session_entities = service.get_active_sessions()
-    response_list = [SessionResponse.from_entity(session) for session in session_entities]
-    
-    return Result.success(data=response_list)
+    try:
+        session_entities = await asyncio.to_thread(service.get_active_sessions)
+        response_list = [SessionResponse.from_entity(session) for session in session_entities]
+        
+        logger.info(f"获取活跃会话成功，共 {len(response_list)} 个活跃会话")
+        return Result.success(data=response_list)
+    except Exception as e:
+        logger.error(f"获取活跃会话失败: {str(e)}", exc_info=True)
+        raise
 
 
 @session_router.get("/", response_model=Result[List[SessionResponse]])
@@ -39,12 +46,17 @@ async def get_all_sessions(service: SessionService = Depends(get_session_service
     :param service: 会话服务实例
     :return: 所有会话信息包装在Result中
     """
-    logger.info(f"获取所有会话请求")
+    logger.info("获取所有会话请求")
     
-    session_entities = service.get_all_sessions()
-    response_list = [SessionResponse.from_entity(session) for session in session_entities]
-    
-    return Result.success(data=response_list)
+    try:
+        session_entities = await asyncio.to_thread(service.get_all_sessions)
+        response_list = [SessionResponse.from_entity(session) for session in session_entities]
+        
+        logger.info(f"获取所有会话成功，共 {len(response_list)} 个会话")
+        return Result.success(data=response_list)
+    except Exception as e:
+        logger.error(f"获取所有会话失败: {str(e)}", exc_info=True)
+        raise
 
 
 @session_router.get("/{session_id}", response_model=Result[SessionResponse])
@@ -57,11 +69,15 @@ async def get_session(session_id: int, service: SessionService = Depends(get_ses
     """
     logger.info(f"获取会话请求，会话ID: {session_id}")
     
-    session_entity = service.get_session_by_session_id(session_id)
-    response = SessionResponse.from_entity(session_entity)
-    
-    logger.info(f"获取会话成功，会话ID: {session_id}")
-    return Result.success(data=response)
+    try:
+        session_entity = await asyncio.to_thread(service.get_session_by_session_id, session_id)
+        response = SessionResponse.from_entity(session_entity)
+        
+        logger.info(f"获取会话成功，会话ID: {session_id}, 状态: {session_entity.status}")
+        return Result.success(data=response)
+    except Exception as e:
+        logger.error(f"获取会话失败，会话ID: {session_id}, 错误: {str(e)}", exc_info=True)
+        raise
 
 
 @session_router.post("/", response_model=Result[SessionResponse])
@@ -71,13 +87,17 @@ async def create_session(service: SessionService = Depends(get_session_service))
     :param service: 会话服务实例
     :return: 创建的会话信息包装在Result中
     """
-    logger.info(f"创建会话请求")
+    logger.info("创建会话请求")
     
-    session_entity = service.create_session()
-    response = SessionResponse.from_entity(session_entity)
-    
-    logger.info(f"创建会话成功，会话ID: {session_entity.id}")
-    return Result.success(data=response)
+    try:
+        session_entity = await asyncio.to_thread(service.create_session)
+        response = SessionResponse.from_entity(session_entity)
+        
+        logger.info(f"创建会话成功，会话ID: {session_entity.id}, 状态: {session_entity.status}")
+        return Result.success(data=response)
+    except Exception as e:
+        logger.error(f"创建会话失败: {str(e)}", exc_info=True)
+        raise
 
 
 @session_router.delete("/{session_id}", response_model=Result[bool])
@@ -90,10 +110,14 @@ async def delete_session(session_id: int, service: SessionService = Depends(get_
     """
     logger.info(f"删除会话请求，会话ID: {session_id}")
     
-    service.delete_session(session_id)
-    
-    logger.info(f"删除会话成功，会话ID: {session_id}")
-    return Result.success(data=True)
+    try:
+        await asyncio.to_thread(service.delete_session, session_id)
+        
+        logger.info(f"删除会话成功，会话ID: {session_id}")
+        return Result.success(data=True)
+    except Exception as e:
+        logger.error(f"删除会话失败，会话ID: {session_id}, 错误: {str(e)}", exc_info=True)
+        raise
 
 
 @session_router.put("/{session_id}", response_model=Result[SessionResponse])
@@ -106,11 +130,14 @@ async def update_session(session_id: int, session_request: SessionRequest, servi
     :return: 更新后的会话信息包装在Result中
     """
     session_data = session_request.to_dict()
-    
-    logger.info(f"更新会话状态，会话ID: {session_id}")
+    logger.info(f"更新会话状态，会话ID: {session_id}, 更新数据: {session_data}")
 
-    updated_session_entity = service.update_session(session_id, session_data)
-    response = SessionResponse.from_entity(updated_session_entity)
+    try:
+        updated_session_entity = await asyncio.to_thread(service.update_session, session_id, session_data)
+        response = SessionResponse.from_entity(updated_session_entity)
 
-    logger.info(f"更新会话状态成功，会话ID: {session_id}")
-    return Result.success(data=response)
+        logger.info(f"更新会话状态成功，会话ID: {session_id}, 新状态: {updated_session_entity.status}")
+        return Result.success(data=response)
+    except Exception as e:
+        logger.error(f"更新会话状态失败，会话ID: {session_id}, 错误: {str(e)}", exc_info=True)
+        raise

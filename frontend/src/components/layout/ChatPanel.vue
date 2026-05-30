@@ -32,6 +32,7 @@ import ChatInput from '@/components/chat/ChatInput.vue'
 .message-area {
   flex: 1;
   min-height: 0;
+  height: 100%;
 }
 
 .input-area {

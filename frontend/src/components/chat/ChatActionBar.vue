@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { NButton, NIcon, NPopconfirm, NSpace, NTooltip, useMessage } from 'naive-ui'
+import { NButton, NIcon, NPopconfirm, NTooltip, useMessage } from 'naive-ui'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { sessionService } from '@/services/sessionService'
@@ -66,14 +66,14 @@ function extract(err: unknown, fallback: string) {
 
 <template>
   <div class="action-bar">
-    <div class="left">
+    <div class="top-row">
       <span class="label">{{ current ? `会话 #${current.id}` : '尚未选择会话' }}</span>
       <span v-if="current" class="status-pill">{{ current.status }}</span>
     </div>
-    <NSpace :size="6">
+    <div class="button-row">
       <NTooltip :delay="200">
         <template #trigger>
-          <NButton size="small" tertiary @click="handleNew">
+          <NButton size="small" tertiary class="action-btn" @click="handleNew">
             <template #icon>
               <NIcon><span class="i-solar-add-square-bold-duotone" /></NIcon>
             </template>
@@ -85,7 +85,7 @@ function extract(err: unknown, fallback: string) {
 
       <NPopconfirm :positive-text="'清空'" :negative-text="'取消'" @positive-click="handleClear">
         <template #trigger>
-          <NButton size="small" tertiary :disabled="!hasSession">
+          <NButton size="small" tertiary class="action-btn" :disabled="!hasSession">
             <template #icon>
               <NIcon><span class="i-solar-trash-bin-2-bold-duotone" /></NIcon>
             </template>
@@ -95,27 +95,27 @@ function extract(err: unknown, fallback: string) {
         清空当前会话的全部消息？该操作不可撤销。
       </NPopconfirm>
 
-      <NButton size="small" tertiary :disabled="!hasSession" @click="handleExport">
+      <NButton size="small" tertiary class="action-btn" :disabled="!hasSession" @click="handleExport">
         <template #icon>
           <NIcon><span class="i-solar-download-bold-duotone" /></NIcon>
         </template>
         导出
       </NButton>
-    </NSpace>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .action-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 12px;
   padding: 12px 16px;
   background: var(--color-bg-card);
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.left {
+.top-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -137,5 +137,31 @@ function extract(err: unknown, fallback: string) {
   background: var(--color-primary-soft);
   padding: 2px 8px;
   border-radius: var(--radius-pill);
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.action-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.action-btn :deep(.n-button__content) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1;
+}
+
+.action-btn :deep(.n-button__icon) {
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
 }
 </style>

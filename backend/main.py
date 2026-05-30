@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from backend.router.SessionRouter import session_router
@@ -5,9 +6,14 @@ from backend.router.ChatRouter import chat_router
 from backend.exception.GlobalExceptionHandler import register_exception_handlers
 from backend.config.DatabaseConfig import init_db
 from backend.config.CorsConfig import register_cors
-import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 
@@ -32,11 +38,13 @@ app = register_exception_handlers(app)
 
 @app.get("/")
 async def root():
+    logger.info("访问根路径 /")
     return {"message": "One and Only Backend API is running"}
 
 
 @app.get("/health")
 async def health_check():
+    logger.info("健康检查 /health")
     return {"status": "healthy"}
 
 
