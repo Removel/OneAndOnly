@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { NButton, NIcon, NTooltip, useMessage } from 'naive-ui'
+import { NButton, NTooltip, useMessage } from 'naive-ui'
 import { useChatStore } from '@/stores/chat'
 import { useSessionStore } from '@/stores/session'
 import { useConnectionStore } from '@/stores/connection'
@@ -46,6 +46,8 @@ function onKeydown(e: KeyboardEvent) {
 <template>
   <div class="chat-input">
     <textarea
+      id="chat-input-textarea"
+      name="chat-input"
       v-model="text"
       class="textarea"
       rows="3"
@@ -59,7 +61,7 @@ function onKeydown(e: KeyboardEvent) {
           <template #trigger>
             <NButton size="small" quaternary disabled>
               <template #icon>
-                <NIcon><span class="i-solar-microphone-3-bold-duotone" /></NIcon>
+                <span class="i-solar-microphone-3-bold-duotone" />
               </template>
             </NButton>
           </template>
@@ -69,7 +71,7 @@ function onKeydown(e: KeyboardEvent) {
           <template #trigger>
             <NButton size="small" quaternary disabled>
               <template #icon>
-                <NIcon><span class="i-solar-emoji-funny-circle-bold-duotone" /></NIcon>
+                <span class="i-solar-emoji-funny-circle-bold-duotone" />
               </template>
             </NButton>
           </template>
@@ -79,7 +81,7 @@ function onKeydown(e: KeyboardEvent) {
           <template #trigger>
             <NButton size="small" quaternary disabled>
               <template #icon>
-                <NIcon><span class="i-solar-paperclip-bold-duotone" /></NIcon>
+                <span class="i-solar-paperclip-bold-duotone" />
               </template>
             </NButton>
           </template>
@@ -96,7 +98,7 @@ function onKeydown(e: KeyboardEvent) {
         >
           发送
           <template #icon>
-            <NIcon><span class="i-solar-plain-2-bold-duotone" /></NIcon>
+            <span class="i-solar-plain-2-bold-duotone" />
           </template>
         </NButton>
       </div>

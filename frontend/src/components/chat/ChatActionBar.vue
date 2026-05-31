@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { NButton, NIcon, NPopconfirm, NTooltip, useMessage } from 'naive-ui'
+import { NButton, NPopconfirm, NTooltip, useMessage } from 'naive-ui'
 import { useSessionStore } from '@/stores/session'
 import { useChatStore } from '@/stores/chat'
 import { sessionService } from '@/services/sessionService'
@@ -75,7 +75,7 @@ function extract(err: unknown, fallback: string) {
         <template #trigger>
           <NButton size="small" tertiary class="action-btn" @click="handleNew">
             <template #icon>
-              <NIcon><span class="i-solar-add-square-bold-duotone" /></NIcon>
+              <span class="i-solar-add-square-bold-duotone" />
             </template>
             新建对话
           </NButton>
@@ -87,7 +87,7 @@ function extract(err: unknown, fallback: string) {
         <template #trigger>
           <NButton size="small" tertiary class="action-btn" :disabled="!hasSession">
             <template #icon>
-              <NIcon><span class="i-solar-trash-bin-2-bold-duotone" /></NIcon>
+              <span class="i-solar-trash-bin-2-bold-duotone" />
             </template>
             清空记录
           </NButton>
@@ -97,7 +97,7 @@ function extract(err: unknown, fallback: string) {
 
       <NButton size="small" tertiary class="action-btn" :disabled="!hasSession" @click="handleExport">
         <template #icon>
-          <NIcon><span class="i-solar-download-bold-duotone" /></NIcon>
+          <span class="i-solar-download-bold-duotone" />
         </template>
         导出
       </NButton>

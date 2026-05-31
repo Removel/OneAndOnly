@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>滚动条快速测试</title>
+  <script>
+    function testScroll() {
+      // 直接在主页面添加测试消息
+      const app = document.querySelector('#app').__vueParentComponent.appContext.app
+      const chatStore = app.config.globalProperties.$pinia._s.get('chat')
+
+      // 添加20条消息
+      for (let i = 1; i <= 20; i++) {
+        chatStore.append({
+          localId: 'test-' + i,
+          role: i % 2 === 0 ? 'user' : 'assistant',
+          text: '测试消息 ' + i + '：这是一条用来测试滚动条的长消息。'.repeat(5),
+          status: 'success',
+          createdAt: Date.now() - i * 60000
+        })
+      }
+
+      // 等待渲染后检查
+      setTimeout(() => {
+        const messageList = document.querySelector('.message-list')
+        if (!messageList) {
+          alert('错误：找不到 .message-list 元素')
+          return
+        }
+
+        const info = {
+          'offsetHeight': messageList.offsetHeight + 'px',
+          'scrollHeight': messageList.scrollHeight + 'px',
+          'overflow-y': getComputedStyle(messageList).overflowY,
+          'min-height': getComputedStyle(messageList).minHeight,
+          'flex': getComputedStyle(messageList).flex,
+          '可滚动': messageList.scrollHeight > messageList.offsetHeight ? '是' : '否'
+        }
+
+        console.table(info)
+        alert('诊断信息已输出到Console，请查看F12控制台')
+      }, 500)
+    }
+
+    function clearMessages() {
+      const app = document.querySelector('#app').__vueParentComponent.appContext.app
+      const chatStore = app.config.globalProperties.$pinia._s.get('chat')
+      chatStore.reset()
+      alert('消息已清空')
+    }
+  </script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 40px;
+      background: #f6f9fb;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #4FB8E6;
+      margin-bottom: 20px;
+    }
+    .instructions {
+      background: #edf3f7;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .instructions ol {
+      margin: 10px 0;
+      padding-left: 24px;
+    }
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    button {
+      padding: 12px 24px;
+      background: #4FB8E6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #2A93C7;
+    }
+    button.secondary {
+      background: #9499A0;
+    }
+    button.secondary:hover {
+      background: #61666D;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MessageList 滚动条测试工具</h1>
+
+    <div class="instructions">
+      <strong>使用说明：</strong>
+      <ol>
+        <li>确保主页面 <code>http://127.0.0.1:5173/</code> 已在另一个标签页打开</li>
+        <li>点击下方"添加测试消息"按钮</li>
+        <li>切换到主页面标签页查看效果</li>
+        <li>按F12查看Console中的诊断信息</li>
+      </ol>
+    </div>
+
+    <button onclick="testScroll()">添加测试消息并诊断</button>
+    <button class="secondary" onclick="clearMessages()">清空消息</button>
+
+    <div class="warning">
+      <strong>注意：</strong>此工具需要主页面已打开。如果点击按钮后出现错误，请确保：
+      <ul>
+        <li>主页面 http://127.0.0.1:5173/ 已在浏览器中打开</li>
+        <li>主页面已完全加载完成</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

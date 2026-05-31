@@ -10,6 +10,7 @@ import ConnectionBanner from '@/components/feedback/ConnectionBanner.vue'
 import { useConnectionStore } from '@/stores/connection'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
+import { useChatStore } from '@/stores/chat'
 import { sessionService } from '@/services/sessionService'
 import { chatService } from '@/services/chatService'
 import { useResponsive } from '@/composables/useResponsive'
@@ -18,6 +19,7 @@ import { useEmotionDriver } from '@/composables/useEmotionDriver'
 const connection = useConnectionStore()
 const session = useSessionStore()
 const ui = useUiStore()
+const chat = useChatStore()
 const message = useMessage()
 const { isMobile, isTablet } = storeToRefs(ui)
 
@@ -47,6 +49,41 @@ function scheduleHealth() {
     void connection.check()
   }, 5000)
 }
+
+// 测试函数
+function addTestMessages() {
+  for (let i = 1; i <= 20; i++) {
+    chat.append({
+      localId: 'test-' + i,
+      role: i % 2 === 0 ? 'user' : 'assistant',
+      text: `测试消息 ${i}：这是一条用来测试滚动条的长消息。`.repeat(5),
+      status: 'success',
+      createdAt: Date.now() - i * 60000,
+    })
+  }
+
+  setTimeout(() => {
+    const messageList = document.querySelector('.message-list')
+    if (messageList) {
+      console.log('=== MessageList 诊断 ===')
+      console.log('offsetHeight:', messageList.offsetHeight)
+      console.log('scrollHeight:', messageList.scrollHeight)
+      console.log('可滚动:', messageList.scrollHeight > messageList.offsetHeight)
+    }
+  }, 500)
+}
+
+function clearTestMessages() {
+  chat.reset()
+  console.log('消息已清空，请查看空状态是否占满整个对话区域')
+}
+
+// 暴露到window供调试使用
+if (import.meta.env.DEV) {
+  ;(window as any).addTestMessages = addTestMessages
+  ;(window as any).clearTestMessages = clearTestMessages
+}
+
 </script>
 
 <template>
@@ -69,7 +106,7 @@ function scheduleHealth() {
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   background: var(--color-bg-base);
 }
 
@@ -80,12 +117,18 @@ function scheduleHealth() {
   gap: 16px;
   padding: 16px 20px 20px;
   min-height: 0;
+  overflow: hidden;
 }
 
 .stage-area,
 .chat-area {
   min-height: 0;
   display: flex;
+  overflow: hidden;
+}
+
+.chat-area {
+  align-items: stretch;
 }
 
 .stage-area {

@@ -36,8 +36,8 @@ watch(
 
 <style scoped>
 .message-list {
-  height: 100%;
-  max-height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 18px 18px 6px;
@@ -45,26 +45,31 @@ watch(
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
 }
 
 .message-list::-webkit-scrollbar {
-  width: 10px;
+  width: 12px;
 }
 
 .message-list::-webkit-scrollbar-track {
   background: var(--color-bg-soft);
-  border-radius: 5px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .message-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-hover);
-  border-radius: 5px;
+  background: var(--color-primary-soft);
+  border-radius: 6px;
   border: 2px solid transparent;
   background-clip: padding-box;
+  min-height: 20px;
 }
 
 .message-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
+  background: var(--color-primary-strong);
   background-clip: padding-box;
 }
 
@@ -73,7 +78,8 @@ watch(
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   color: var(--color-text-tertiary);
   gap: 6px;
 }
