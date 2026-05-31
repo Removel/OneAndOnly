@@ -34,11 +34,9 @@ def plan_execute_node(state: GlobalState) -> Dict[str, Any]:
     user_input = state["user_input"]
     memory = state["memory"]
 
-    tools = str(tools_for_plan_executor)
-
     logger.info(f"用户输入: {user_input[:50]}..." if len(user_input) > 50 else f"用户输入: {user_input}")
     logger.info(f"记忆内容: {memory[:50]}..." if memory and len(memory) > 50 else f"记忆内容: {memory if memory else '无'}")
-    logger.info(f"可用工具: {[tool.name if hasattr(tool, 'name') else str(tool) for tool in tools]}")
+    logger.info(f"可用工具: {[tool.name if hasattr(tool, 'name') else str(tool) for tool in tools_for_plan_executor]}")
 
     # 创建agent实例
     logger.debug("创建plan_execute agent实例")

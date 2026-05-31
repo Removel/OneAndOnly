@@ -11,7 +11,7 @@ from agent.prompt.memory_manager_prompt import (
     memory_manager_system_prompt_summarize,
 )
 from agent.prompt.summarizer_prompt import  summarizer_system_prompt_error, \
-    summarizer_system_prompt_normal
+    summarizer_system_prompt_normal, summarizer_user_prompt_normal, summarizer_user_prompt_error
 from agent.util import LLMFactory, AgentFactory
 from agent.util.find_tools import tools_for_memory_manager
 
@@ -66,13 +66,15 @@ def final_output_node(state: GlobalState)->Dict[str, Any]:
         logger.info("重试次数超过3次，使用错误响应模板")
         prompt = ChatPromptTemplate.from_messages([
             ("system", summarizer_system_prompt_error),
-        ], template_format="jinja2")
+            ("human", summarizer_user_prompt_error)
+        ])
     else:
         # 构建正常响应提示词模板
         logger.info("使用正常响应模板")
         prompt = ChatPromptTemplate.from_messages([
             ("system", summarizer_system_prompt_normal),
-        ], template_format="jinja2")
+            ("human", summarizer_user_prompt_normal)
+        ])
 
     # 创建链式调用，直接获取文本内容
     chain = prompt | llm | StrOutputParser()
