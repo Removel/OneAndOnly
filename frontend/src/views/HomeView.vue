@@ -57,7 +57,7 @@ function addTestMessages() {
       localId: 'test-' + i,
       role: i % 2 === 0 ? 'user' : 'assistant',
       text: `测试消息 ${i}：这是一条用来测试滚动条的长消息。`.repeat(5),
-      status: 'success',
+      status: 'sent',
       createdAt: Date.now() - i * 60000,
     })
   }
@@ -65,10 +65,11 @@ function addTestMessages() {
   setTimeout(() => {
     const messageList = document.querySelector('.message-list')
     if (messageList) {
+      const element = messageList as HTMLElement
       console.log('=== MessageList 诊断 ===')
-      console.log('offsetHeight:', messageList.offsetHeight)
-      console.log('scrollHeight:', messageList.scrollHeight)
-      console.log('可滚动:', messageList.scrollHeight > messageList.offsetHeight)
+      console.log('offsetHeight:', element.offsetHeight)
+      console.log('scrollHeight:', element.scrollHeight)
+      console.log('可滚动:', element.scrollHeight > element.offsetHeight)
     }
   }, 500)
 }

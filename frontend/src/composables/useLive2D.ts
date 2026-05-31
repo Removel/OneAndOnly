@@ -101,7 +101,7 @@ export function useLive2D() {
 
       // 使用 window.PIXI.live2d.Live2DModel（参考 EchoBot 实现）
       const next = await window.PIXI.live2d.Live2DModel.from(desc.entry, {
-        autoInteract: false,
+        autoInteract: true,
       })
 
       console.log('[Live2D] 模型加载完成，等待纹理...')

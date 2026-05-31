@@ -71,7 +71,7 @@ async function handleNew() {
     <div class="header">
       <NButton type="primary" block @click="handleNew">
         <template #icon>
-          <NIcon><span class="i-solar-add-square-bold-duotone" /></NIcon>
+          <span class="i-solar-add-square-bold-duotone" style="font-size: 18px" />
         </template>
         新建对话
       </NButton>
