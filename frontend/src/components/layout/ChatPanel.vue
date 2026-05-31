@@ -18,7 +18,7 @@ import ChatInput from '@/components/chat/ChatInput.vue'
 .chat-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-lg);
@@ -32,7 +32,8 @@ import ChatInput from '@/components/chat/ChatInput.vue'
 .message-area {
   flex: 1;
   min-height: 0;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .input-area {

@@ -14,7 +14,32 @@ export default defineConfig({
     presetIcons({
       scale: 1.2,
       warn: true,
+      collections: {
+        solar: () => import('@iconify-json/solar/icons.json').then(i => i.default),
+        mingcute: () => import('@iconify-json/mingcute/icons.json').then(i => i.default),
+      },
     }),
+  ],
+  safelist: [
+    // AppTopBanner.vue 中的图标
+    'i-solar-chat-line-bold-duotone',
+    'i-solar-settings-bold-duotone',
+    'i-solar-question-circle-bold-duotone',
+    'i-solar-info-circle-bold-duotone',
+    // MessageList.vue 中的图标
+    'i-solar-chat-square-2-bold-duotone',
+    // MessageBubble.vue 中的图标
+    'i-solar-user-bold-duotone',
+    'i-solar-magic-stick-3-bold-duotone',
+    // SessionSwitcher.vue 中的图标
+    'i-solar-chat-square-like-bold-duotone',
+    'i-solar-alt-arrow-down-bold-duotone',
+    // SessionListPanel.vue 中的图标
+    'i-solar-add-square-bold-duotone',
+    // SessionItem.vue 中的图标
+    'i-solar-trash-bin-2-bold-duotone',
+    // HelpView.vue 中的图标
+    'i-solar-arrow-left-bold-duotone',
   ],
   transformers: [transformerDirectives(), transformerVariantGroup()],
   theme: {

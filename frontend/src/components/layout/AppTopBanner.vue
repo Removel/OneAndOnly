@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { NButton, NIcon, NTooltip, NTag } from 'naive-ui'
+import { NButton, NTooltip, NTag } from 'naive-ui'
 import { useUiStore } from '@/stores/ui'
 import { useConnectionStore } from '@/stores/connection'
 import SessionSwitcher from '@/components/session/SessionSwitcher.vue'
@@ -29,7 +29,16 @@ const actions: Action[] = [
 
 const visibleActions = computed(() => actions.filter((a) => !a.mobileOnly || isMobile.value))
 
-const onHelpView = computed(() => route.name === 'help')
+const currentHelpTab = computed(() => route.query.tab)
+
+function isActionActive(action: Action) {
+  if (action.key === 'help' || action.key === 'about') {
+    // 对于帮助和关于按钮，检查当前活动的标签页
+    return currentHelpTab.value === action.key
+  }
+  // 对于其他按钮，简单检查当前路由是否是help页面
+  return false
+}
 
 function handle(action: Action) {
   switch (action.key) {
@@ -84,13 +93,11 @@ function handle(action: Action) {
             quaternary
             circle
             class="banner-btn"
-            :class="{ active: action.key === 'help' && onHelpView }"
+            :class="{ active: isActionActive(action) }"
             @click="handle(action)"
           >
             <template #icon>
-              <NIcon size="20">
-                <span :class="action.icon" />
-              </NIcon>
+              <span :class="action.icon" style="font-size: 20px" />
             </template>
           </NButton>
         </template>

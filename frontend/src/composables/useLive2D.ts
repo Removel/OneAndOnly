@@ -106,57 +106,45 @@ export function useLive2D() {
 
       console.log('[Live2D] 模型加载完成，等待纹理...')
       console.log('[Live2D] internalModel:', next.internalModel)
-/*
-      // 关键修复：等待纹理完全加载
-      // pixi-live2d-display 0.4.0 的 from() 不会等待纹理，需要手动等待
-      const textures = next.internalModel?.textures
-      if (textures && textures.length > 0) {
-        console.log('[Live2D] 等待', textures.length, '个纹理加载...')
-        await Promise.all(
-          textures.map((texture, index) => {
-            return new Promise<void>((resolve) => {
-              if (texture?.baseTexture) {
-                if (texture.baseTexture.valid) {
-                  console.log(`[Live2D] 纹理 ${index} 已就绪`)
-                  resolve()
-                } else {
-                  console.log(`[Live2D] 等待纹理 ${index} 加载...`)
-                  texture.baseTexture.once('loaded', () => {
-                    console.log(`[Live2D] 纹理 ${index} 加载完成`)
-                    resolve()
-                  })
-                  texture.baseTexture.once('error', (err: any) => {
-                    console.error(`[Live2D] 纹理 ${index} 加载失败:`, err)
-                    resolve() // 即使失败也继续
-                  })
-                  // 超时保护
-                  setTimeout(() => {
-                    console.warn(`[Live2D] 纹理 ${index} 加载超时`)
-                    resolve()
-                  }, 10000)
-                }
-              } else {
-                console.warn(`[Live2D] 纹理 ${index} 无效`)
-                resolve()
-              }
-            })
-          }),
-        )
-        console.log('[Live2D] 所有纹理加载完成')
-      } else {
-        console.warn('[Live2D] 没有找到纹理数组，可能加载失败')
+
+      // 等待 loaded promise（确保基础加载完成）
+      if ((next as any).loaded) {
+        await (next as any).loaded
+        console.log('[Live2D] loaded promise 完成')
       }
-*/
-      await (next as any).loaded;
+
       // 销毁旧模型
       destroyModel()
 
       // 存储新模型
       model = next
 
-      // 添加到舞台
+      // 先添加到舞台（PIXI 需要模型在渲染树中才会初始化纹理）
       application.stage.addChild(model)
       console.log('[Live2D] 模型已添加到舞台')
+
+      // 等待 renderer 初始化
+      let waitCount = 0
+      while (!next.internalModel?.renderer && waitCount < 50) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        waitCount++
+      }
+
+      if (next.internalModel?.renderer) {
+        console.log('[Live2D] renderer 已初始化')
+      } else {
+        console.warn('[Live2D] renderer 未初始化')
+      }
+
+      // 等待多个渲染帧以确保纹理上传到 GPU
+      console.log('[Live2D] 等待纹理上传...')
+      for (let i = 0; i < 5; i++) {
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+      }
+
+      // 额外等待确保纹理完全就绪
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      console.log('[Live2D] 纹理等待完成')
 
       // 设置模型属性（参考 EchoBot）
       model.anchor.set(0.5, 0.5)

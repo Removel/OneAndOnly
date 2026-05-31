@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { NButton, NCollapse, NCollapseItem, NIcon, NSpin, NSwitch, NTag } from 'naive-ui'
+import { NButton, NCollapse, NCollapseItem, NSpin, NSwitch, NTag } from 'naive-ui'
 import { useUiStore } from '@/stores/ui'
 import { useEmotionStore } from '@/stores/emotion'
 import { useLive2DStore } from '@/stores/live2d'
@@ -42,7 +42,7 @@ function formatLoadedAt(value: number | null) {
           <span class="loaded-at">manifest：{{ formatLoadedAt(lastLoadedAt) }}</span>
           <NButton size="small" tertiary :loading="loading" @click="handleReload">
             <template #icon>
-              <NIcon><span class="i-solar-refresh-bold-duotone" /></NIcon>
+              <span class="i-solar-refresh-bold-duotone" />
             </template>
             重新读取 manifest
           </NButton>
