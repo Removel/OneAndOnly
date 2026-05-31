@@ -68,17 +68,21 @@ export function useLive2D() {
     const w = app.renderer.width / (app.renderer.resolution || 1)
     const h = app.renderer.height / (app.renderer.resolution || 1)
 
-    // 获取模型尺寸
     const modelWidth = model.internalModel?.width || model.width || 1
     const modelHeight = model.internalModel?.height || model.height || 1
     const baseScale = Math.min(w / modelWidth, h / modelHeight)
-    const fitScale = Math.min(w / modelWidth, h / modelHeight) * 0.9
-    const targetScale = Math.min(baseScale * t.scale * 10, fitScale)
+
+    // 大幅放大模型，使其上半身更突出
+    const enlargedScale = baseScale * t.scale * 20
+    const targetScale = enlargedScale
 
     model.scale.set(targetScale)
-    model.anchor.set(0.5, 0.5)
-    model.x = w * (0.5 + t.x)
-    model.y = h * (0.5 + t.y)
+
+    // 将模型锚点设置在腹部位置（约模型高度的1/3处）
+    model.anchor.set(0.5, 0.33)
+    // 将模型的腹部位置对齐到容器底部，稍微往上移一些
+    model.x = w * 0.5
+    model.y = h * 0.8  // 往上移一点，从0.9到0.8
   }
 
   async function loadCurrent() {
