@@ -1,0 +1,10 @@
+{
+  "backgrounds": [
+    {
+      "id": "lost_garden",
+      "name": "遗落花园",
+      "path": "/background/lost_garden.png",
+      "thumbnail": "/background/lost_garden_thumb.png"
+    },
+  ]
+}

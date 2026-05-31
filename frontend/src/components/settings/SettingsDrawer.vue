@@ -1,30 +1,69 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NButton, NCollapse, NCollapseItem, NSpin, NSwitch, NTag } from 'naive-ui'
 import { useUiStore } from '@/stores/ui'
 import { useEmotionStore } from '@/stores/emotion'
 import { useLive2DStore } from '@/stores/live2d'
+import { useBackgroundStore } from '@/stores/background'
 
 const ui = useUiStore()
 const emotion = useEmotionStore()
 const live2d = useLive2DStore()
+const background = useBackgroundStore()
 const { showDebug } = storeToRefs(ui)
 const { vac, category } = storeToRefs(emotion)
 const { models, currentId, loading, error, lastLoadedAt } = storeToRefs(live2d)
+const { allBackgrounds, currentId: currentBgId } = storeToRefs(background)
 
-onMounted(() => {
-  // StagePanel 也会触发，store 内部已做去重；此处保证用户先打开抽屉时也能看到列表
+const bgLoading = ref(false)
+const bgError = ref<string | null>(null)
+
+onMounted(async () => {
   void live2d.loadManifest().catch(() => undefined)
+  await loadBackgroundManifest().catch(() => undefined)
 })
+
+async function loadBackgroundManifest() {
+  bgLoading.value = true
+  bgError.value = null
+  try {
+    const res = await fetch('/background/manifest.json', { cache: 'no-cache' })
+    if (!res.ok) throw new Error(`背景manifest加载失败：HTTP ${res.status}`)
+    const data = await res.json()
+    if (data.backgrounds && Array.isArray(data.backgrounds)) {
+      data.backgrounds.forEach((bg: any) => {
+        background.addCustom({
+          id: bg.id,
+          name: bg.name,
+          path: bg.path,
+          thumbnail: bg.thumbnail,
+        })
+      })
+    }
+  } catch (e) {
+    bgError.value = e instanceof Error ? e.message : String(e)
+  } finally {
+    bgLoading.value = false
+  }
+}
 
 function handlePick(id: string) {
   if (id === currentId.value) return
   live2d.setCurrent(id)
 }
 
+function handlePickBackground(id: string) {
+  if (id === currentBgId.value) return
+  background.setCurrent(id)
+}
+
 function handleReload() {
   void live2d.loadManifest(true).catch(() => undefined)
+}
+
+function handleReloadBackground() {
+  void loadBackgroundManifest().catch(() => undefined)
 }
 
 function formatLoadedAt(value: number | null) {
@@ -86,6 +125,62 @@ function formatLoadedAt(value: number | null) {
               v-if="m.id === currentId"
               size="small"
               type="info"
+              :bordered="false"
+              class="active-tag"
+            >
+              使用中
+            </NTag>
+          </li>
+        </ul>
+      </NCollapseItem>
+
+      <NCollapseItem title="背景设置" name="background">
+        <p class="muted">背景图片放在 public/background/ 文件夹下，在 manifest.json 中配置。</p>
+
+        <div class="toolbar">
+          <span class="loaded-at">背景数量：{{ allBackgrounds.length }}</span>
+          <NButton size="small" tertiary :loading="bgLoading" @click="handleReloadBackground">
+            <template #icon>
+              <span class="i-solar-refresh-bold-duotone" />
+            </template>
+            重新读取
+          </NButton>
+        </div>
+
+        <div v-if="bgLoading" class="placeholder">
+          <NSpin size="small" />
+          <span>正在读取背景配置…</span>
+        </div>
+
+        <div v-else-if="bgError" class="placeholder error">
+          <span class="i-solar-cloud-cross-bold-duotone placeholder-icon" />
+          <span class="error-text">{{ bgError }}</span>
+        </div>
+
+        <ul v-else class="model-list">
+          <li
+            v-for="bg in allBackgrounds"
+            :key="bg.id"
+            class="model-item"
+            :class="{ active: bg.id === currentBgId }"
+            role="button"
+            tabindex="0"
+            @click="handlePickBackground(bg.id)"
+            @keydown.enter.prevent="handlePickBackground(bg.id)"
+          >
+            <div class="model-thumb">
+              <img v-if="bg.thumbnail" :src="bg.thumbnail" :alt="bg.name" />
+              <img v-else-if="bg.path" :src="bg.path" :alt="bg.name" />
+              <span v-else class="i-solar-image-bold-duotone" />
+            </div>
+            <div class="model-meta">
+              <p class="model-name">{{ bg.name }}</p>
+              <p class="model-id">{{ bg.id }}</p>
+            </div>
+            <NTag
+              v-if="bg.id === currentBgId"
+              size="small"
+              type="success"
               :bordered="false"
               class="active-tag"
             >

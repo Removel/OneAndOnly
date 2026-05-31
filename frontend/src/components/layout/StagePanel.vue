@@ -4,18 +4,33 @@ import { storeToRefs } from 'pinia'
 import { NSpin } from 'naive-ui'
 import { useEmotionStore } from '@/stores/emotion'
 import { useLive2DStore } from '@/stores/live2d'
+import { useBackgroundStore } from '@/stores/background'
 import { useLive2D } from '@/composables/useLive2D'
 
 const emotion = useEmotionStore()
 const live2d = useLive2DStore()
+const background = useBackgroundStore()
 const { category } = storeToRefs(emotion)
 const { current, error, ready, loading, models } = storeToRefs(live2d)
+const { currentBackground } = storeToRefs(background)
 
 const { canvasRef, containerRef, bootstrap } = useLive2D()
 
 const auraStyle = computed(() => ({
   background: `radial-gradient(circle at 50% 35%, hsla(var(--aura-h), var(--aura-s), var(--aura-l), var(--aura-a)) 0%, transparent 65%)`,
 }))
+
+const backgroundStyle = computed(() => {
+  if (currentBackground.value?.path) {
+    return {
+      backgroundImage: `url(${currentBackground.value.path})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+  }
+  return {}
+})
 
 const labelMap: Record<string, string> = {
   happy: '心情很好',
@@ -29,7 +44,6 @@ onMounted(async () => {
   try {
     await live2d.loadManifest()
   } catch {
-    /* store.error 已写入，UI 自行展示 */
     return
   }
   await bootstrap()
@@ -38,7 +52,7 @@ onMounted(async () => {
 
 <template>
   <section ref="containerRef" class="stage">
-    <div class="stage-bg" />
+    <div class="stage-bg" :style="backgroundStyle" />
     <div class="stage-aura" :style="auraStyle" />
 
     <canvas ref="canvasRef" class="stage-canvas" />
@@ -104,6 +118,7 @@ onMounted(async () => {
     radial-gradient(circle at 20% 0%, var(--color-accent-foam) 0%, transparent 55%),
     radial-gradient(circle at 80% 100%, var(--color-primary-soft) 0%, transparent 60%),
     var(--color-bg-card);
+  transition: background-image 0.5s ease-in-out;
 }
 
 .stage-aura {
