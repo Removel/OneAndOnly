@@ -40,7 +40,7 @@ const subtitle = computed(() => {
     <NPopconfirm @positive-click="emit('delete')">
       <template #trigger>
         <button class="delete-btn" type="button" @click.stop>
-          <NIcon><span class="i-solar-trash-bin-2-bold-duotone" /></NIcon>
+          <span class="i-solar-trash-bin-2-bold-duotone" style="font-size: 16px" />
         </button>
       </template>
       删除该会话？该操作不可撤销。

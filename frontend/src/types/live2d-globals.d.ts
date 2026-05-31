@@ -5,6 +5,7 @@ declare global {
     internalModel?: {
       width?: number
       height?: number
+      renderer?: any
       textures?: Array<{
         baseTexture?: {
           valid?: boolean
@@ -22,6 +23,9 @@ declare global {
     cursor: string
     expression: (name: string) => void
     destroy: (options?: { children?: boolean; texture?: boolean; baseTexture?: boolean }) => void
+    focus: (x: number, y: number, instant?: boolean) => void
+    hasMotion: (name: string) => boolean
+    internalModel?: any
   }
 
   type PixiApplicationInstance = {

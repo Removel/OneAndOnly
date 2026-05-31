@@ -46,7 +46,7 @@ function addTestMessages() {
       localId: 'test-' + i,
       role: i % 2 === 0 ? 'user' : 'assistant',
       text: `测试消息 ${i}：这是一条用来测试滚动条的长消息。`.repeat(3),
-      status: 'success',
+      status: 'sent',
       createdAt: Date.now() - i * 60000,
     })
   }
