@@ -3,6 +3,7 @@ from typing import List
 import asyncio
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 
 from backend.entity.request.ChatRequest import ChatRequest
 from backend.entity.response.ChatResponse import ChatResponse
@@ -91,3 +92,38 @@ async def clear_conversation_history(session_id: int, service: ChatService = Dep
     except Exception as e:
         logger.error(f"清空对话历史失败，会话ID: {session_id}, 错误: {str(e)}", exc_info=True)
         raise
+
+
+@chat_router.post("/chat-stream")
+async def chat_stream(chat_request: ChatRequest, service: ChatService = Depends(get_chat_service)):
+    """
+    流式聊天端点，返回 SSE 事件流
+    :param chat_request: 用户对话请求内容
+    :param service: 聊天服务实例
+    :return: SSE 事件流
+    """
+    logger.info(f"收到流式聊天请求，会话ID: {chat_request.session_id}, 清除历史: {chat_request.clear_history}, 用户输入长度: {len(chat_request.human_input)}")
+    
+    async def generate():
+        try:
+            async for event in service.chat_stream(
+                human_input=chat_request.human_input,
+                session_id=chat_request.session_id,
+                clear_history=chat_request.clear_history
+            ):
+                yield event
+        except Exception as e:
+            logger.error(f"流式聊天生成失败，会话ID: {chat_request.session_id}, 错误: {str(e)}", exc_info=True)
+            import json
+            error_event = f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
+            yield error_event
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive"
+        }
+    )
