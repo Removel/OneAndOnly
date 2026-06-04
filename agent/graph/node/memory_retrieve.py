@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from agent.graph.state import GlobalState
 from agent.prompt.memory_manager_prompt import memory_manager_system_prompt_find
 from agent.util import AgentFactory
-from agent.util.find_tools import all_tools
+from agent.util.find_tools import tools_for_memory_manager
 
 # 配置日志
 logging.basicConfig(
@@ -38,7 +38,7 @@ def memory_retrieve_node(state: GlobalState) -> Dict[str, Any]:
     logger.debug("创建memory_manager agent实例")
     memory_manager = AgentFactory.create_role_agent(
         agent_name="memory_manager",
-        agent_tools=all_tools,
+        agent_tools=tools_for_memory_manager,
         system_prompt=memory_manager_system_prompt_find,
         response_format=MemoryRetrieveResult,
     )
