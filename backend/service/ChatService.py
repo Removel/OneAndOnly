@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 import logging
 
-from agent.main import chat_with_agent, get_conversation_history, clear_conversation_history
+from agent.main import chat_with_agent, get_conversation_history, clear_conversation_history, chat_stream_with_agent
 from backend.repository.SessionRepository import SessionRepository
 from backend.exception.Exceptions import ParamValidationException, NotFoundException, ChatException
 from backend.entity.response.ChatHistoryResponse import ChatHistoryResponse
@@ -137,3 +137,47 @@ class ChatService:
         except Exception as e:
             logger.error(f"清空对话历史异常，会话ID: {session_id}, 错误: {str(e)}", exc_info=True)
             raise ChatException(msg=f"清空对话历史失败: {str(e)}")
+
+    async def chat_stream(self, human_input: str, session_id: int, clear_history: bool = False):
+        """
+        执行流式聊天操作
+        :param human_input: 用户输入文本
+        :param session_id: 会话ID
+        :param clear_history: 是否清空历史记录
+        :return: 异步生成器，产生 SSE 格式的事件流
+        :raises ParamValidationException: 参数验证失败
+        :raises NotFoundException: 会话不存在
+        :raises ChatException: 聊天操作失败
+        """
+        logger.info(f"执行流式聊天操作，会话ID: {session_id}, 清除历史: {clear_history}, 输入长度: {len(human_input)}")
+        
+        if not human_input or human_input.strip() == "":
+            logger.warning("参数验证失败，输入文本不能为空")
+            raise ParamValidationException(msg="输入文本不能为空")
+        
+        if session_id <= 0:
+            logger.warning(f"参数验证失败，会话ID必须为正整数，实际值: {session_id}")
+            raise ParamValidationException(msg="会话ID必须为正整数")
+        
+        session = self.session_repository.get_session_by_session_id(session_id)
+        if session is None:
+            logger.warning(f"会话不存在，会话ID: {session_id}")
+            raise NotFoundException(msg=f"会话ID {session_id} 不存在")
+        
+        try:
+            thread_id = str(session_id)
+            logger.debug(f"调用智能体进行流式对话，thread_id: {thread_id}")
+            
+            async for event in chat_stream_with_agent(
+                user_input=human_input,
+                session_id=thread_id,
+                clear_history=clear_history
+            ):
+                yield event
+            
+            logger.info(f"流式聊天操作成功，会话ID: {session_id}")
+        except Exception as e:
+            logger.error(f"流式聊天操作异常，会话ID: {session_id}, 错误: {str(e)}", exc_info=True)
+            import json
+            error_event = f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
+            yield error_event
