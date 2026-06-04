@@ -128,6 +128,5 @@ def find_all_tools() -> List[Any]:
     all_tools.extend(find_tools_for_plan_executor())
     return all_tools
     
-tools_for_plan_executor = find_tools_for_plan_executor() 
+tools_for_plan_executor = find_tools_for_plan_executor()
 tools_for_memory_manager = find_tools_for_memory_manager()
-all_tools = find_all_tools()
