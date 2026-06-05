@@ -24,11 +24,17 @@ class LLMFactory:
         max_tokens = config['model_config'].get('max_tokens')
         base_url = config['api_config']['base_url']
         api_key = config['api_config']['api_key']
+        # 超时配置：避免 API 调用无限等待（各 YAML 可覆盖）
+        request_timeout = config['model_config'].get('request_timeout', 60.0)
+        max_retries = config['model_config'].get('max_retries', 2)
+
         llm = ChatOpenAI(
             model=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
             base_url=base_url,
             api_key=api_key,
+            request_timeout=request_timeout,
+            max_retries=max_retries,
         )
         return llm
