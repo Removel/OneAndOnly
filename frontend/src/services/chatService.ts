@@ -59,10 +59,33 @@ function mapNodeNameToStatus(nodeName: string): 'recalling' | 'thinking' | 'answ
   return 'node_processing'
 }
 
-/** styled_output 节点负责最终输出，只有它产生的 token 需要展示给用户 */
-function isStyledOutputNode(nodeName: string): boolean {
+/**
+ * plan_execute 输出自然语言（用户可见），styled_output 仅在其门控直接回复时产生可见文本。
+ * 两个节点的 token 都需要采集，但需要过滤掉 JSON 结构体。
+ */
+function isTokenSourceNode(nodeName: string): boolean {
   const lowerName = nodeName.toLowerCase()
-  return lowerName.includes('styled') || lowerName.includes('output')
+  return lowerName.includes('plan') || lowerName.includes('styled') || lowerName.includes('output')
+}
+
+/**
+ * 流式 token 清洗：检测 JSON 结构体起始并截断。
+ * LLM 输出通常是 "自然语言...\n\n{...JSON...}" —— 我们只保留自然语言部分。
+ */
+function cleanStreamContent(buffer: string, newChunk: string): { display: string; inJson: boolean; jsonStarted: boolean } {
+  // 如果已经在 JSON 区域内，丢弃新内容
+  const jsonStart = buffer.lastIndexOf('\n\n{')
+  if (jsonStart >= 0) {
+    // JSON 已经开始，只取 JSON 之前的部分
+    const beforeJson = buffer.substring(0, jsonStart)
+    return { display: beforeJson, inJson: true, jsonStarted: true }
+  }
+  // 检查是否仅以 { 开头（纯 JSON，无自然语言前缀）
+  if (buffer.length === 0 && newChunk.trimStart().startsWith('{')) {
+    return { display: '', inJson: true, jsonStarted: true }
+  }
+  // 正常文本
+  return { display: buffer + newChunk, inJson: false, jsonStarted: false }
 }
 
 /**
@@ -123,6 +146,8 @@ export const chatService = {
 
     let currentNode = ''
     let shouldCollectTokens = false
+    /** 用于流式 token 清洗的原始文本缓冲（检测 JSON 起始） */
+    let rawBuffer = ''
 
     try {
       const stream = chatApi.sendChatStream({ human_input: trimmed, session_id: sessionId })
@@ -136,10 +161,11 @@ export const chatService = {
               const nodeStatus = mapNodeNameToStatus(currentNode)
               chat.setStatus(nodeStatus)
 
-              // 只在 styled_output 节点收集 token（用户只需要看到最终输出）
-              shouldCollectTokens = isStyledOutputNode(currentNode)
+              // plan_execute 和 styled_output 产生的 token 需要展示给用户
+              shouldCollectTokens = isTokenSourceNode(currentNode)
+              // 重置缓冲，准备接收新节点的流式输出
+              rawBuffer = ''
             }
-            // 忽略内部 chain 事件（RunnableSequence 等），避免覆盖 shouldCollectTokens
             break
           }
 
@@ -155,30 +181,35 @@ export const chatService = {
           case 'token': {
             const content = event.data.content as string | undefined
             if (content && shouldCollectTokens) {
+              // 流式清洗：检测并截断 JSON 结构体
+              const cleaned = cleanStreamContent(rawBuffer, content)
+              rawBuffer += content
+
+              if (cleaned.inJson || cleaned.jsonStarted) {
+                // 已进入 JSON 区域，不再展示新 token（等待 done 事件的干净 response_text）
+                break
+              }
+
               // 累积文本并移除 emotion 标签
-              assistantMsg.text = stripEmotion(assistantMsg.text + content)
+              const displayText = stripEmotion(cleaned.display)
+              if (!displayText) break
+
+              assistantMsg.text = displayText
 
               // 获取当前 items 列表
               const items = assistantMsg.items ?? []
-              // 如果最后一个 item 是 text 类型，直接拼接到它的 content 上
+              // 如果最后一个 item 是 text 类型，直接替换它的 content（全量刷新比增量拼接更可靠）
               const last = items[items.length - 1]
               let newItems: MessageItem[]
               if (last && last.type === 'text') {
-                const mergedContent = stripEmotion(last.content + content)
-                const merged = { ...last, content: mergedContent, timestamp: Date.now() }
-                newItems = [...items.slice(0, -1), merged]
+                newItems = [...items.slice(0, -1), { ...last, content: displayText, timestamp: Date.now() }]
               } else {
-                const stripped = stripEmotion(content)
-                if (stripped) {
-                  newItems = [...items, { type: 'text', content: stripped, timestamp: Date.now() }]
-                } else {
-                  newItems = items
-                }
+                newItems = [...items, { type: 'text', content: displayText, timestamp: Date.now() }]
               }
 
               chat.update(assistantMsg.localId, {
                 items: newItems,
-                text: assistantMsg.text,
+                text: displayText,
                 status: 'pending',
               })
               assistantMsg.items = newItems
@@ -218,10 +249,20 @@ export const chatService = {
           }
 
           case 'done': {
+            // 使用服务端返回的权威干净 response_text 替换流式累积文本
+            const finalText = (event.data.response_text as string) || assistantMsg.text
+            const finalItems = finalText
+              ? [{ type: 'text' as const, content: finalText, timestamp: Date.now() }]
+              : assistantMsg.items
+
             chat.update(assistantMsg.localId, {
               status: 'sent',
+              text: finalText,
+              items: finalItems,
               retryTimes: event.data.retry_times as number | undefined,
             })
+            assistantMsg.text = finalText
+            assistantMsg.items = finalItems
             chat.setStatus('idle')
             break
           }

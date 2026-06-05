@@ -199,9 +199,9 @@ async def chat_stream_with_agent(
                 final_state = event.get("data", {}).get("output")
 
         if final_state:
-            yield f"event: done\ndata: {json.dumps({'status': 'completed', 'emotion_vac': final_state.get('emotion_vac', {}), 'retry_times': final_state.get('retry_times', 0)})}\n\n"
+            yield f"event: done\ndata: {json.dumps({'status': 'completed', 'response_text': final_state.get('response_text', ''), 'emotion_vac': final_state.get('emotion_vac', {}), 'retry_times': final_state.get('retry_times', 0)})}\n\n"
         else:
-            yield f"event: done\ndata: {json.dumps({'status': 'completed', 'emotion_vac': {}, 'retry_times': 0})}\n\n"
+            yield f"event: done\ndata: {json.dumps({'status': 'completed', 'response_text': '', 'emotion_vac': {}, 'retry_times': 0})}\n\n"
 
     except Exception as e:
         error_data = json.dumps({"message": str(e)})
