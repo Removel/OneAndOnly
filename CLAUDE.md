@@ -43,7 +43,7 @@ pytest test_scripts/backend_test/test_session_repository.py -v
 
 # Agent node tests (each node has its own driver script)
 python test_scripts/agent_test/test_agent.py
-python test_scripts/agent_test/test_plan_execute.py     # also: test_evaluate, test_memory_retrieve, test_final_output
+python test_scripts/agent_test/test_plan_execute.py     # also: test_evaluate, test_memory_retrieve, test_styled_output
 
 # Styler model standalone demo
 python -m custom_model.styler.service
@@ -73,16 +73,17 @@ When adding a new endpoint: write Repository → Service → Router in that orde
 Pipeline (see `.harness/doc/状态、节点与边设计.md` for the canonical version):
 
 ```
-START → memory_retrieve → plan_execute → (need_evaluate?) → evaluate → (pass | retry<3) → plan_execute (loop)
-                                       ↘ final_output ←──────┘                          ↘ final_output → END
+START → memory_retrieve → styled_output → (need_continue?) → plan_execute → (need_evaluate?) → evaluate → (pass | retry<3) → plan_execute (loop)
+                                        ↘ END ←──────────────┘                 ↘ styled_output → END ←────────────────┘
 ```
 
-- **Shared state** is `GlobalState` (TypedDict in `agent/graph/state.py`): `messages`, `user_input`, `response_text`, `plan`, `memory`, `emotion_vac`, `need_evaluate`, `retry_times`, `error_message`. `messages` uses LangGraph's `add_messages` reducer.
-- **Four LLM roles**, each with its own YAML in `agent/config/`: `memory_manager` (vector-DB tools), `plan_execute` (intent+reply+evaluate-decision), `evaluator` (quality check, drives the retry loop, max 3 retries), `summarizer` (final styling + VAC emotion + async memory write).
+- **Shared state** is `GlobalState` (TypedDict in `agent/graph/state.py`): `messages`, `user_input`, `response_text`, `plan`, `memory`, `emotion_vac`, `need_evaluate`, `need_continue`, `retry_times`, `error_message`. `messages` uses LangGraph's `add_messages` reducer.
+- **Four LLM roles**, each with its own YAML in `agent/config/`: `memory_manager` (vector-DB tools), `plan_execute` (intent+reply+evaluate-decision), `evaluator` (quality check, drives the retry loop, max 3 retries), `summarizer` (gate routing + final styling + VAC emotion + async memory write).
 - **Auto-discovery in `agent/util/build_and_compile_graph.py`**:
   - Nodes: every `.py` in `agent/graph/node/` whose function signature is `(state: GlobalState) -> Dict[str, Any]` is registered. Function name `foo_node` becomes node `foo`; otherwise the function name is the node name.
   - Conditional edges: every function in `agent/graph/edge/` named `route_after_<node>` with signature `(state: GlobalState) -> str` is wired as a conditional edge from `<node>`.
-  - The fixed edges (`memory_retrieve → plan_execute`, entry/finish points, and the literal mappings `{"evaluate": "evaluate", "final_output": "final_output"}`) are hard-coded in `build_graph()`. **If you add a new node or edge target, update `build_graph()` too** — auto-discovery doesn't infer the routing dictionaries.
+  - The fixed edges (`memory_retrieve → styled_output`), entry point, and the literal mappings for conditional edges are hard-coded in `build_graph()`. **If you add a new node or edge target, update `build_graph()` too** — auto-discovery doesn't infer the routing dictionaries.
+  - `styled_output`'s conditional edge maps `"__end__"` to `END` (LangGraph sentinel) for the termination path.
 - **Tool discovery** (`agent/util/find_tools.py`): scans `agent/tools/tools_for_memory_manager/` and `agent/tools/tools_for_plan_executor/` for any module attribute that quacks like a LangChain tool (has `name`, `description`, `invoke`). The `plan_executor` tools dir is currently empty.
 - **Persistence**: LangGraph checkpoints go to `database/agent/checkpoints.db` (SQLite, via `SqliteSaver`). The `ChatManager` singleton in `agent/main.py` builds and caches the compiled graph + checkpointer. `clear_history(thread_id)` deletes the LangGraph thread.
 - **Long-term memory**: Chroma vector DB at `database/agent/vector_memory.db/`, plus a Markdown file (`user_info.md`) for static profile data. Split rationale documented in `.harness/doc/人物记忆向量数据库 Chroma 分类体系.md`.

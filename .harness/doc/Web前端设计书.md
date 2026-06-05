@@ -74,7 +74,7 @@ Web 前端是 One and Only 的**独立可视化与交互模块**，与 `unity/` 
               │   agent/  (LangGraph)    │
               │   MemoryRetrieve →       │
               │   PlanExecute →          │
-              │   Evaluate → FinalOutput │
+              │   Evaluate → StyledOutput │
               └──────────────────────────┘
 ```
 

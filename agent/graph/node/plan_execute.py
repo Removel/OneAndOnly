@@ -1,15 +1,14 @@
 import json
 import logging
-from typing import Dict, Any
+import re
+from typing import Dict, Any, Optional
 
 from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from pydantic import BaseModel, Field
 
 from agent.graph.state import GlobalState
 from agent.prompt.plan_execute_prompt import plan_execute_system_prompt
-from agent.util import AgentFactory, LLMFactory
+from agent.util import AgentFactory
 from agent.util.find_tools import tools_for_plan_executor
 
 # 配置日志
@@ -18,6 +17,18 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+def _extract_json(text: str) -> Optional[str]:
+    """从混合文本中提取 JSON 对象子串（找到第一个 { 和最后一个 } 之间的内容）"""
+    if not text:
+        return None
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return text[start:end + 1]
+    return None
+
 
 class PlanExecuteResult(BaseModel):
     response_text: str = Field(description="对用户的回复文本")
@@ -65,15 +76,33 @@ def plan_execute_node(state: GlobalState) -> Dict[str, Any]:
         # 从最后一条消息中提取内容
         last_message = messages[-1]
         message_content = str(last_message.content) if hasattr(last_message, 'content') else str(last_message)
-        
+
+        parsed = None
+        # 先尝试直接解析整个内容为 JSON
         try:
             parsed = json.loads(message_content)
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # 如果失败，尝试提取 JSON 子串（处理 LLM 输出"文本+JSON"混合体）
+        if parsed is None:
+            json_substr = _extract_json(message_content)
+            if json_substr:
+                try:
+                    parsed = json.loads(json_substr)
+                    logger.debug("从混合输出中成功提取 JSON 子串")
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+        if parsed is not None:
             response_text = parsed.get("response_text", message_content)
             need_evaluate = parsed.get("need_evaluate", False)
-        except (json.JSONDecodeError, ValueError):
+        else:
+            # 完全无法解析 JSON，使用原始文本作为回复
             response_text = message_content
             need_evaluate = False
-    
+            logger.debug("无法解析 JSON，使用原始文本作为 response_text")
+
     if not response_text:
         response_text = str(result)
     

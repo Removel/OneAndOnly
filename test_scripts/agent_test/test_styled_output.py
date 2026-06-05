@@ -3,12 +3,12 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agent.graph.node.final_output import final_output_node
+from agent.graph.node.styled_output import styled_output_node
 from agent.graph.state import GlobalState
 from langchain_core.messages import HumanMessage
 
-def test_final_output():
-    print("=== Final Output Node 测试脚本 ===")
+def test_styled_output():
+    print("=== Styled Output Node 测试脚本 ===")
     print("测试最终输出节点的功能\n")
     
     test_cases = [
@@ -60,22 +60,27 @@ def test_final_output():
                 "tools": [],
                 "emotion_vac": {},
                 "need_evaluate": False,
+                "need_continue": False,
                 "retry_times": test_case["retry_times"],
                 "error_message": None
             }
-            
-            print("调用 final_output_node...")
-            result = final_output_node(state)
-            
+
+            print("调用 styled_output_node（风格模式）...")
+            result = styled_output_node(state)
+
             print("\n=== 测试结果 ===")
             print(f"✓ 节点执行成功")
-            
+
             response_text = result.get('response_text', '')
             print(f"\n📝 总结响应:")
             if response_text:
                 print(f"  {response_text}")
             else:
                 print(f"  无响应内容")
+
+            need_continue = result.get('need_continue', None)
+            if need_continue is not None:
+                print(f"\n🔀 need_continue: {need_continue}")
             
             emotion_vac = result.get('emotion_vac', {})
             print(f"\n🎭 情绪VAC:")
@@ -98,10 +103,81 @@ def test_final_output():
         
         print("\n" + "=" * 60 + "\n")
     
-    print("=== 所有测试完成 ===")
+    print("=== 风格模式测试完成 ===\n")
+
+
+def test_gate_mode():
+    print("=== Styled Output Node 门控模式测试 ===")
+    print("测试门控模式的判断功能（response_text 为空）\n")
+
+    gate_test_cases = [
+        {
+            "name": "简单问候",
+            "user_input": "你好！",
+            "description": "简单问候应判断为无需继续，直接回复"
+        },
+        {
+            "name": "简单日常",
+            "user_input": "今天天气真好",
+            "description": "日常对话应判断为无需继续，直接回复"
+        },
+        {
+            "name": "复杂查询",
+            "user_input": "帮我查一下数据库里最近的销售数据，分析趋势并生成报告",
+            "description": "复杂任务应判断为需要继续到 plan_execute"
+        },
+    ]
+
+    for i, test_case in enumerate(gate_test_cases, 1):
+        print(f"门控测试用例 {i}: {test_case['name']}")
+        print(f"描述: {test_case['description']}")
+        print(f"用户输入: {test_case['user_input']}")
+        print("-" * 60)
+
+        try:
+            state: GlobalState = {
+                "messages": [HumanMessage(content=test_case["user_input"])],
+                "user_input": test_case["user_input"],
+                "response_text": "",
+                "plan": "",
+                "memory": "",
+                "tools": [],
+                "emotion_vac": {},
+                "need_evaluate": False,
+                "need_continue": True,
+                "retry_times": 0,
+                "error_message": None
+            }
+
+            print("调用 styled_output_node（门控模式）...")
+            result = styled_output_node(state)
+
+            print("\n=== 门控结果 ===")
+            need_continue = result.get('need_continue', None)
+            print(f"🔀 need_continue: {need_continue}")
+
+            response_text = result.get('response_text', '')
+            if response_text:
+                print(f"📝 直接回复: {response_text[:200]}..." if len(response_text) > 200 else f"📝 直接回复: {response_text}")
+
+            emotion_vac = result.get('emotion_vac', {})
+            if emotion_vac:
+                print(f"🎭 情绪VAC: {emotion_vac}")
+
+            if need_continue is True and not response_text:
+                print("✓ 正确：复杂问题标记为需要继续处理，无直接回复")
+
+        except Exception as e:
+            print(f"\n✗ 测试失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+        print("\n" + "=" * 60 + "\n")
+
+    print("=== 门控模式测试完成 ===")
 
 def test_single_input():
-    print("=== Final Output Node 单次输入测试 ===")
+    print("=== Styled Output Node 单次输入测试 ===")
     print("请输入测试内容（直接回车退出）：\n")
     
     while True:
@@ -125,6 +201,7 @@ def test_single_input():
                 "tools": [],
                 "emotion_vac": {},
                 "need_evaluate": False,
+                "need_continue": False,
                 "retry_times": retry_times,
                 "error_message": None
             }
@@ -134,7 +211,7 @@ def test_single_input():
             print(f"重试次数: {retry_times}")
             print("-" * 40)
             
-            result = final_output_node(state)
+            result = styled_output_node(state)
             
             print(f"\n📝 总结响应:")
             response_text = result.get('response_text', '')
@@ -167,13 +244,18 @@ def test_single_input():
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description='Final Output Node 测试脚本')
-    parser.add_argument('--interactive', '-i', action='store_true', 
+    parser = argparse.ArgumentParser(description='Styled Output Node 测试脚本')
+    parser.add_argument('--interactive', '-i', action='store_true',
                        help='使用交互式输入模式')
-    
+    parser.add_argument('--gate', '-g', action='store_true',
+                       help='运行门控模式测试')
+
     args = parser.parse_args()
-    
+
     if args.interactive:
         test_single_input()
+    elif args.gate:
+        test_gate_mode()
     else:
-        test_final_output()
+        test_styled_output()
+        test_gate_mode()
