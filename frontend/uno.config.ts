@@ -40,6 +40,14 @@ export default defineConfig({
     'i-solar-trash-bin-2-bold-duotone',
     // HelpView.vue 中的图标
     'i-solar-arrow-left-bold-duotone',
+    // NodeStatusBar.vue 中的图标
+    'i-solar-history-bold-duotone',
+    'i-solar-cpu-bold-duotone',
+    'i-solar-chat-square-call-bold-duotone',
+    'i-solar-refresh-circle-linear',
+    'i-solar-danger-circle-bold-duotone',
+    // SettingsDrawer.vue 中的图标
+    'i-solar-gallery-bold-duotone',
   ],
   transformers: [transformerDirectives(), transformerVariantGroup()],
   theme: {
