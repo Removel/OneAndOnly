@@ -19,4 +19,17 @@ export interface ChatResponseDTO {
   success: boolean
 }
 
-export type NodeStatus = 'idle' | 'recalling' | 'thinking' | 'answering' | 'failed'
+export type NodeStatus = 'idle' | 'recalling' | 'thinking' | 'answering' | 'failed' | 'tool_calling' | 'node_processing'
+
+export interface StreamEvent {
+  type: 'token' | 'done' | 'error' | 'tool_start' | 'tool_end' | 'node_start' | 'node_end'
+  data: Record<string, unknown>
+}
+
+/** done 事件的 payload，与后端 chat_stream_with_agent 对齐 */
+export interface StreamDoneData {
+  status: string
+  response_text: string
+  emotion_vac: Record<string, number>
+  retry_times: number
+}
