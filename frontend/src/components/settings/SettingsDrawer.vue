@@ -171,7 +171,7 @@ function formatLoadedAt(value: number | null) {
             <div class="model-thumb">
               <img v-if="bg.thumbnail" :src="bg.thumbnail" :alt="bg.name" />
               <img v-else-if="bg.path" :src="bg.path" :alt="bg.name" />
-              <span v-else class="i-solar-image-bold-duotone" />
+              <span v-else class="i-solar-gallery-bold-duotone" />
             </div>
             <div class="model-meta">
               <p class="model-name">{{ bg.name }}</p>

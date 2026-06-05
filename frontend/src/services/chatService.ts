@@ -148,6 +148,8 @@ export const chatService = {
     let shouldCollectTokens = false
     /** 用于流式 token 清洗的原始文本缓冲（检测 JSON 起始） */
     let rawBuffer = ''
+    /** 跨 token 持久化 JSON 抑制状态（cleanStreamContent 无状态，需外部跟踪） */
+    let inJsonBlock = false
 
     try {
       const stream = chatApi.sendChatStream({ human_input: trimmed, session_id: sessionId })
@@ -163,8 +165,9 @@ export const chatService = {
 
               // plan_execute 和 styled_output 产生的 token 需要展示给用户
               shouldCollectTokens = isTokenSourceNode(currentNode)
-              // 重置缓冲，准备接收新节点的流式输出
+              // 重置缓冲和 JSON 抑制状态，准备接收新节点的流式输出
               rawBuffer = ''
+              inJsonBlock = false
             }
             break
           }
@@ -181,12 +184,18 @@ export const chatService = {
           case 'token': {
             const content = event.data.content as string | undefined
             if (content && shouldCollectTokens) {
+              // 如果已进入 JSON 块，持续抑制直到节点结束
+              if (inJsonBlock) {
+                break
+              }
+
               // 流式清洗：检测并截断 JSON 结构体
               const cleaned = cleanStreamContent(rawBuffer, content)
               rawBuffer += content
 
-              if (cleaned.inJson || cleaned.jsonStarted) {
-                // 已进入 JSON 区域，不再展示新 token（等待 done 事件的干净 response_text）
+              if (cleaned.jsonStarted) {
+                // 检测到 JSON 起始，进入抑制模式，不再展示后续 token
+                inJsonBlock = true
                 break
               }
 
@@ -198,7 +207,7 @@ export const chatService = {
 
               // 获取当前 items 列表
               const items = assistantMsg.items ?? []
-              // 如果最后一个 item 是 text 类型，直接替换它的 content（全量刷新比增量拼接更可靠）
+              // 全量刷新模式：每次用最新完整文本替换最后一个 text item
               const last = items[items.length - 1]
               let newItems: MessageItem[]
               if (last && last.type === 'text') {
@@ -249,11 +258,13 @@ export const chatService = {
           }
 
           case 'done': {
-            // 使用服务端返回的权威干净 response_text 替换流式累积文本
+            // 使用服务端返回的权威干净 response_text，同时保留工具调用记录
             const finalText = (event.data.response_text as string) || assistantMsg.text
-            const finalItems = finalText
-              ? [{ type: 'text' as const, content: finalText, timestamp: Date.now() }]
-              : assistantMsg.items
+            // 保留所有 tool_call item，只替换/追加 text item
+            const toolItems = (assistantMsg.items ?? []).filter(i => i.type === 'tool_call')
+            const finalItems: MessageItem[] = finalText
+              ? [...toolItems, { type: 'text' as const, content: finalText, timestamp: Date.now() }]
+              : [...toolItems, ...(assistantMsg.items ?? []).filter(i => i.type === 'text')]
 
             chat.update(assistantMsg.localId, {
               status: 'sent',
