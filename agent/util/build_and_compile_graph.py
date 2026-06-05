@@ -3,7 +3,7 @@ import inspect
 from pathlib import Path
 from typing import Dict, Callable, Any, Optional
 
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from langgraph.types import Checkpointer
 
 from agent.graph.state import GlobalState
@@ -155,16 +155,16 @@ def scan_nodes() -> Dict[str, Dict[str, Any]]:
                     continue
                 
                 # 从函数名推断节点名称
-                # 例如：memory_retrieve -> memory_retrieve, plan_node -> plan, final_output_node -> final_output
+                # 例如：memory_retrieve -> memory_retrieve, plan_node -> plan, styled_output_node -> styled_output
                 node_name = attr_name
-                
+
                 # 处理特殊命名情况
                 if node_name.endswith("_node"):
                     node_name = node_name.replace("_node", "")
                 elif node_name == "memory_retrieve":
                     node_name = "memory_retrieve"
-                elif node_name == "final_output_node":
-                    node_name = "final_output"
+                elif node_name == "styled_output_node":
+                    node_name = "styled_output"
                 
                 nodes[node_name] = {
                     "function": attr,
@@ -189,7 +189,7 @@ def get_node_functions() -> Dict[str, Callable]:
             "memory_retrieve": memory_retrieve函数,
             "plan_execute": plan_execute_node函数,
             "evaluate": evaluate_node函数,
-            "final_output": final_output_node函数
+            "styled_output": styled_output_node函数
         }
     """
     nodes_config = scan_nodes()
@@ -204,21 +204,25 @@ def build_graph() -> StateGraph:
     构建完整的LangGraph图，包括所有节点和边
     
     根据文档设计的流程：
-    Start → MemoryRetrieve → PlanExecute → (条件边)
-                                              ↓
-                                          if need_evaluate?
-                                              ↓
-                                          Evaluate → (条件边)
-                                                  ↓
-                                              need_evaluate?
-                                            ↙         ↘
-                                          true       false
-                                            ↓           ↓
-                                  重试次数>=3?     FinalOutput
-                                    ↙       ↘
-                                   否       是
-                                   ↓         ↓
-                                  PlanExecute    FinalOutput
+    Start → MemoryRetrieve → StyledOutput → (条件边)
+                                                ↓
+                                         if need_continue?
+                                           ↙         ↘
+                                         yes          no
+                                          ↓            ↓
+                                   PlanExecute       END
+                                          ↓
+                                   if need_evaluate?
+                                     ↙         ↘
+                                   yes          no
+                                    ↓            ↓
+                               Evaluate    StyledOutput
+                                    ↓            ↓
+                             need_evaluate?      END
+                               ↙         ↘
+                          retry<3    pass/retry>=3
+                              ↓            ↓
+                       PlanExecute    StyledOutput → END
     
     Returns:
         StateGraph: 构建完成的图对象
@@ -238,32 +242,40 @@ def build_graph() -> StateGraph:
     graph.set_entry_point("memory_retrieve")
     
     # 添加固定边（无条件边）
-    # MemoryRetrieve → PlanExecute
-    graph.add_edge("memory_retrieve", "plan_execute")
+    # MemoryRetrieve → StyledOutput
+    graph.add_edge("memory_retrieve", "styled_output")
     
     # 添加条件边
-    # PlanExecute → (evaluate 或 final_output)
+    # StyledOutput → (plan_execute 或 END)
+    if "styled_output" in edges:
+        graph.add_conditional_edges(
+            "styled_output",
+            edges["styled_output"],
+            {
+                "plan_execute": "plan_execute",
+                "__end__": END,
+            }
+        )
+
+    # PlanExecute → (evaluate 或 styled_output)
     if "plan_execute" in edges:
         graph.add_conditional_edges(
             "plan_execute",
             edges["plan_execute"],
             {
                 "evaluate": "evaluate",
-                "final_output": "final_output"
+                "styled_output": "styled_output"
             }
         )
     
-    # Evaluate → (plan_execute 或 final_output)
+    # Evaluate → (plan_execute 或 styled_output)
     if "evaluate" in edges:
         graph.add_conditional_edges(
             "evaluate",
             edges["evaluate"],
-            {"plan_execute": "plan_execute", "final_output": "final_output"},
+            {"plan": "plan_execute", "styled_output": "styled_output"},
         )
 
-    # 设置终点
-    graph.set_finish_point("final_output")
-    
     return graph
 
 

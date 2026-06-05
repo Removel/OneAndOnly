@@ -28,6 +28,9 @@ class GlobalState (TypedDict):
     retry_times: int                                        #重试次数
     error_message: Optional[str]                            #错误信息
 
+    #流程控制
+    need_continue: bool                                     #styled_output门控：True=继续plan_execute, False=结束
+
 
 class GlobalStafrom:
     pass

@@ -37,7 +37,7 @@
 
 **核心技术栈**: LangGraph, FastAPI, Chroma, Unity + Live2D, LoRA, VAC 情绪模型
 
-**核心流程**: MemoryRetrieve → PlanExecute → Evaluate → FinalOutput
+**核心流程**: MemoryRetrieve → StyledOutput（门控）→ PlanExecute → Evaluate → StyledOutput（风格）
 
 ## 🔧 任务介绍
 
