@@ -2,7 +2,7 @@
 model_config:
   model_name: "gpt-4o"   # Model name for summarization tasks
   temperature: 0.4               # Moderate temperature for balanced summaries
-  max_tokens: 512                # Maximum tokens for response
+  max_tokens: 2048                # Maximum tokens for response (需要容纳 JSON 包裹的完整回复文本)
 api_config:
   base_url: "https://api.ssopen.top/v1"  # API endpoint
   api_key_env: "OPENAI_API_KEY"          # Name of environment variable containing the API key
