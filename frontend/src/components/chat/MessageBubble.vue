@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 import type { UiMessage } from '@/types/message'
+import { useMarkdown } from '@/composables/useMarkdown'
 
 const props = defineProps<{
   message: UiMessage
@@ -11,6 +12,8 @@ const failed = computed(() => props.message.status === 'failed')
 const pending = computed(() => props.message.status === 'pending')
 
 const time = computed(() => formatRelative(props.message.createdAt))
+
+const { rendered } = useMarkdown(toRef(() => props.message.text))
 
 function formatRelative(ts: number) {
   const diff = Date.now() - ts
@@ -42,7 +45,7 @@ function pad(n: number) {
           <span class="dot" />
           <span class="dot" />
         </p>
-        <p v-else class="text">{{ message.text }}</p>
+        <div v-else class="text markdown-body" v-html="rendered" />
       </div>
       <p class="meta">
         <span>{{ time }}</span>
@@ -103,7 +106,6 @@ function pad(n: number) {
   color: var(--color-text-primary);
   font-size: 15px;
   line-height: 1.65;
-  white-space: pre-wrap;
   word-break: break-word;
   box-shadow: var(--shadow-card);
   transition: border-color 0.4s ease;

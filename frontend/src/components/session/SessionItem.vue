@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NIcon, NPopconfirm } from 'naive-ui'
+import { NPopconfirm } from 'naive-ui'
 import type { SessionResponseDTO } from '@/types/session'
 
 const props = defineProps<{
