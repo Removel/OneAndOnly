@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { NButton, NEmpty, NIcon, NSpin, useMessage } from 'naive-ui'
+import { NButton, NEmpty, NSpin, useMessage } from 'naive-ui'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 import { sessionService } from '@/services/sessionService'

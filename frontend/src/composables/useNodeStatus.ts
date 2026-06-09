@@ -7,6 +7,8 @@ const LABELS: Record<NodeStatus, string> = {
   recalling: '回忆中',
   thinking: '思考中',
   answering: '回答中',
+  tool_calling: '工具调用中',
+  node_processing: '处理中',
   failed: '出了一点问题',
 }
 
@@ -15,6 +17,8 @@ const TONES: Record<NodeStatus, 'default' | 'info' | 'warning' | 'success' | 'er
   recalling: 'info',
   thinking: 'info',
   answering: 'success',
+  tool_calling: 'warning',
+  node_processing: 'info',
   failed: 'error',
 }
 
