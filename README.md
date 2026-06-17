@@ -76,7 +76,17 @@ git clone https://github.com/Removel/OneAndOnly.git
 cd OneAndOnly
 ```
 
-#### 2. 后端设置
+#### 2. 一键初始化与启动（推荐）
+
+```bash
+# 首次安装 Python 虚拟环境、后端依赖和前端依赖
+./init.sh
+
+# 日常启动后端和前端开发服务
+./dev.sh
+```
+
+#### 3. 后端设置（手动方式）
 
 ```bash
 # 创建虚拟环境
@@ -90,7 +100,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-#### 3. 前端设置
+#### 4. 前端设置（手动方式）
 
 ```bash
 cd frontend
@@ -103,7 +113,7 @@ cp .env.development.example .env.development
 cp .env.production.example .env.production
 ```
 
-#### 4. 启动服务
+#### 5. 启动服务（手动方式）
 
 **启动后端服务**:
 
@@ -123,7 +133,7 @@ pnpm dev
 
 前端服务将在 `http://localhost:5173` 启动
 
-#### 5. 访问应用
+#### 6. 访问应用
 
 打开浏览器访问 `http://localhost:5173` 即可开始使用 One and Only。
 
