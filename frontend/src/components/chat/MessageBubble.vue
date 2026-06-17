@@ -10,6 +10,9 @@ const props = defineProps<{
 const isUser = computed(() => props.message.role === 'user')
 const failed = computed(() => props.message.status === 'failed')
 const pending = computed(() => props.message.status === 'pending')
+const toolItems = computed(() =>
+  (props.message.items ?? []).filter((item) => item.type === 'tool_call'),
+)
 
 const time = computed(() => formatRelative(props.message.createdAt))
 
@@ -30,6 +33,10 @@ function formatRelative(ts: number) {
 function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`
 }
+
+function toolStatusLabel(status?: 'running' | 'done') {
+  return status === 'done' ? '已完成' : '调用中'
+}
 </script>
 
 <template>
@@ -39,12 +46,32 @@ function pad(n: number) {
       <span v-else class="i-solar-magic-stick-3-bold-duotone" />
     </div>
     <div class="bubble-wrapper">
+      <div v-if="!isUser && toolItems.length > 0" class="tool-list">
+        <div
+          v-for="item in toolItems"
+          :key="`${item.toolName ?? 'tool'}-${item.timestamp}`"
+          class="tool-card"
+          :class="{ done: item.toolStatus === 'done' }"
+        >
+          <span
+            v-if="item.toolStatus === 'done'"
+            class="tool-icon i-solar-check-circle-bold-duotone"
+          />
+          <span v-else class="tool-icon i-solar-code-scan-bold-duotone" />
+          <div class="tool-content">
+            <span class="tool-title">{{ item.toolName ?? 'unknown' }}</span>
+            <span class="tool-desc">{{ toolStatusLabel(item.toolStatus) }}</span>
+          </div>
+        </div>
+      </div>
       <div class="bubble" :class="{ user: isUser, failed, pending }">
         <p v-if="pending && !message.text" class="typing">
           <span class="dot" />
           <span class="dot" />
           <span class="dot" />
         </p>
+        <!-- markdown-it disables raw HTML, so rendered output is constrained to markdown tokens. -->
+        <!-- eslint-disable-next-line vue/no-v-html -->
         <div v-else class="text markdown-body" v-html="rendered" />
       </div>
       <p class="meta">
@@ -96,6 +123,57 @@ function pad(n: number) {
 
 .bubble-row.user .bubble-wrapper {
   align-items: flex-end;
+}
+
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tool-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  background: rgb(255 255 255 / 72%);
+  border: 1px dashed rgb(79 184 230 / 35%);
+  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-card);
+}
+
+.tool-card.done {
+  border-style: solid;
+  background: var(--color-primary-soft);
+}
+
+.tool-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--color-primary-strong);
+}
+
+.tool-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tool-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+.tool-desc {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
 }
 
 .bubble {
