@@ -104,7 +104,9 @@ def _gate_mode(state: GlobalState, user_input: str, memory: str) -> Dict[str, An
     # 执行 agent
     logger.info("执行summarizer agent（门控判断）...")
     user_message = summarizer_user_prompt_gate.format(memory=memory, user_input=user_input)
-    result = summarizer.invoke({"messages": [HumanMessage(content=user_message)]})
+    input_messages = list(state.get("messages", []))
+    input_messages.append(HumanMessage(content=user_message))
+    result = summarizer.invoke({"messages": input_messages})
 
     # 解析结构化输出
     str_response = result["messages"][-1].content

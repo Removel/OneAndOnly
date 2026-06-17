@@ -60,19 +60,19 @@ function mapNodeNameToStatus(nodeName: string): 'recalling' | 'thinking' | 'answ
 }
 
 /**
- * plan_execute 输出自然语言（用户可见），styled_output 仅在其门控直接回复时产生可见文本。
- * 两个节点的 token 都需要采集，但需要过滤掉 JSON 结构体。
+ * 只有 styled_output 是用户可见输出源。
+ * plan_execute 属于内部推理/工具执行阶段，不能直接流式展示，否则会和最终风格化回复重复。
  */
 function isTokenSourceNode(nodeName: string): boolean {
   const lowerName = nodeName.toLowerCase()
-  return lowerName.includes('plan') || lowerName.includes('styled') || lowerName.includes('output')
+  return lowerName.includes('styled') || lowerName.includes('output')
 }
 
 /**
  * 流式 token 清洗：检测 JSON 结构体起始并截断。
  * LLM 输出通常是 "自然语言...\n\n{...JSON...}" —— 我们只保留自然语言部分。
  */
-function cleanStreamContent(buffer: string, newChunk: string): { display: string; inJson: boolean; jsonStarted: boolean } {
+function cleanStreamContent(buffer: string): { display: string; inJson: boolean; jsonStarted: boolean } {
   // 如果已经在 JSON 区域内，丢弃新内容
   const jsonStart = buffer.lastIndexOf('\n\n{')
   if (jsonStart >= 0) {
@@ -81,11 +81,11 @@ function cleanStreamContent(buffer: string, newChunk: string): { display: string
     return { display: beforeJson, inJson: true, jsonStarted: true }
   }
   // 检查是否仅以 { 开头（纯 JSON，无自然语言前缀）
-  if (buffer.length === 0 && newChunk.trimStart().startsWith('{')) {
+  if (buffer.trimStart().startsWith('{')) {
     return { display: '', inJson: true, jsonStarted: true }
   }
   // 正常文本
-  return { display: buffer + newChunk, inJson: false, jsonStarted: false }
+  return { display: buffer, inJson: false, jsonStarted: false }
 }
 
 /**
@@ -189,9 +189,9 @@ export const chatService = {
                 break
               }
 
-              // 流式清洗：检测并截断 JSON 结构体
-              const cleaned = cleanStreamContent(rawBuffer, content)
+              // 流式清洗：先合并当前 token，再检测 JSON 起始，避免跨 token 漏掉 "{"
               rawBuffer += content
+              const cleaned = cleanStreamContent(rawBuffer)
 
               if (cleaned.jsonStarted) {
                 // 检测到 JSON 起始，进入抑制模式，不再展示后续 token
