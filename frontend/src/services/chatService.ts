@@ -1,10 +1,27 @@
 import * as chatApi from '@/api/chat'
 import { useChatStore } from '@/stores/chat'
-import type { UiMessage, MessageItem } from '@/types/message'
+import { useEmotionStore } from '@/stores/emotion'
+import type { UiMessage, MessageItem, EmotionVAC } from '@/types/message'
 import type { MessageResponseDTO } from '@/types/message'
 
 function localId(): string {
   return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+function normalizeEmotionVac(raw: unknown): EmotionVAC | null {
+  if (!raw || typeof raw !== 'object') return null
+  const source = raw as Partial<Record<keyof EmotionVAC, unknown>>
+  const valence = normalizeVacValue(source.valence)
+  const arousal = normalizeVacValue(source.arousal)
+  const control = normalizeVacValue(source.control)
+  if (valence == null || arousal == null || control == null) return null
+  return { valence, arousal, control }
+}
+
+function normalizeVacValue(value: unknown): number | null {
+  if (typeof value !== 'number' || Number.isNaN(value)) return null
+  const clamped = Math.min(1, Math.max(0, value))
+  return clamped * 2 - 1
 }
 
 /**
@@ -42,7 +59,9 @@ function pickRenderableHistory(messages: MessageResponseDTO[]): UiMessage[] {
     })
 }
 
-function mapNodeNameToStatus(nodeName: string): 'recalling' | 'thinking' | 'answering' | 'tool_calling' | 'node_processing' {
+function mapNodeNameToStatus(
+  nodeName: string,
+): 'recalling' | 'thinking' | 'answering' | 'tool_calling' | 'node_processing' {
   const lowerName = nodeName.toLowerCase()
   if (lowerName.includes('recall') || lowerName.includes('memory')) {
     return 'recalling'
@@ -50,7 +69,12 @@ function mapNodeNameToStatus(nodeName: string): 'recalling' | 'thinking' | 'answ
   if (lowerName.includes('think') || lowerName.includes('plan')) {
     return 'thinking'
   }
-  if (lowerName.includes('answer') || lowerName.includes('response') || lowerName.includes('styled') || lowerName.includes('output')) {
+  if (
+    lowerName.includes('answer') ||
+    lowerName.includes('response') ||
+    lowerName.includes('styled') ||
+    lowerName.includes('output')
+  ) {
     return 'answering'
   }
   if (lowerName.includes('tool') || lowerName.includes('execute')) {
@@ -72,7 +96,11 @@ function isTokenSourceNode(nodeName: string): boolean {
  * 流式 token 清洗：检测 JSON 结构体起始并截断。
  * LLM 输出通常是 "自然语言...\n\n{...JSON...}" —— 我们只保留自然语言部分。
  */
-function cleanStreamContent(buffer: string): { display: string; inJson: boolean; jsonStarted: boolean } {
+function cleanStreamContent(buffer: string): {
+  display: string
+  inJson: boolean
+  jsonStarted: boolean
+} {
   // 如果已经在 JSON 区域内，丢弃新内容
   const jsonStart = buffer.lastIndexOf('\n\n{')
   if (jsonStart >= 0) {
@@ -93,12 +121,7 @@ function cleanStreamContent(buffer: string): { display: string; inJson: boolean;
  * LangGraph astream_events 会同时发出图节点事件和内部 chain 事件，
  * 只有图节点才应该改变 shouldCollectTokens 和状态栏。
  */
-const GRAPH_NODES = new Set([
-  'memory_retrieve',
-  'plan_execute',
-  'evaluate',
-  'styled_output',
-])
+const GRAPH_NODES = new Set(['memory_retrieve', 'plan_execute', 'evaluate', 'styled_output'])
 
 function isGraphNode(name: string): boolean {
   return GRAPH_NODES.has(name)
@@ -122,6 +145,7 @@ export const chatService = {
     const trimmed = text.trim()
     if (!trimmed) return
     const chat = useChatStore()
+    const emotion = useEmotionStore()
 
     const now = Date.now()
     const userMsg: UiMessage = {
@@ -211,7 +235,10 @@ export const chatService = {
               const last = items[items.length - 1]
               let newItems: MessageItem[]
               if (last && last.type === 'text') {
-                newItems = [...items.slice(0, -1), { ...last, content: displayText, timestamp: Date.now() }]
+                newItems = [
+                  ...items.slice(0, -1),
+                  { ...last, content: displayText, timestamp: Date.now() },
+                ]
               } else {
                 newItems = [...items, { type: 'text', content: displayText, timestamp: Date.now() }]
               }
@@ -233,6 +260,7 @@ export const chatService = {
               type: 'tool_call',
               content: `调用工具: ${toolName}`,
               toolName,
+              toolStatus: 'running',
               timestamp: Date.now(),
             }
             const items = [...(assistantMsg.items ?? []), toolItem]
@@ -249,7 +277,11 @@ export const chatService = {
               const lastItem = items[lastIdx]
               if (lastItem.type === 'tool_call') {
                 const updated = [...items]
-                updated[lastIdx] = { ...lastItem, content: `调用工具: ${lastItem.toolName ?? 'unknown'} ✓` }
+                updated[lastIdx] = {
+                  ...lastItem,
+                  content: `调用工具: ${lastItem.toolName ?? 'unknown'} ✓`,
+                  toolStatus: 'done',
+                }
                 chat.update(assistantMsg.localId, { items: updated })
                 assistantMsg.items = updated
               }
@@ -260,16 +292,22 @@ export const chatService = {
           case 'done': {
             // 使用服务端返回的权威干净 response_text，同时保留工具调用记录
             const finalText = (event.data.response_text as string) || assistantMsg.text
+            const emotionVac = normalizeEmotionVac(event.data.emotion_vac)
+            if (emotionVac) {
+              emotion.setVac(emotionVac)
+              assistantMsg.emotionVac = emotionVac
+            }
             // 保留所有 tool_call item，只替换/追加 text item
-            const toolItems = (assistantMsg.items ?? []).filter(i => i.type === 'tool_call')
+            const toolItems = (assistantMsg.items ?? []).filter((i) => i.type === 'tool_call')
             const finalItems: MessageItem[] = finalText
               ? [...toolItems, { type: 'text' as const, content: finalText, timestamp: Date.now() }]
-              : [...toolItems, ...(assistantMsg.items ?? []).filter(i => i.type === 'text')]
+              : [...toolItems, ...(assistantMsg.items ?? []).filter((i) => i.type === 'text')]
 
             chat.update(assistantMsg.localId, {
               status: 'sent',
               text: finalText,
               items: finalItems,
+              emotionVac: emotionVac ?? assistantMsg.emotionVac,
               retryTimes: event.data.retry_times as number | undefined,
             })
             assistantMsg.text = finalText

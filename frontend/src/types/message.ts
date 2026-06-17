@@ -27,6 +27,7 @@ export interface MessageItem {
   type: 'text' | 'tool_call'
   content: string
   toolName?: string
+  toolStatus?: 'running' | 'done'
   timestamp: number
 }
 
